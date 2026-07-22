@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C# Deep Dive — обучалка-игра</title>
+  <meta name="description" content="Интерактивная игра-обучалка по C#: дженерики, вариантность, enumerables, FileStream I/O и паттерны проектирования." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="logo">C#</span>
+        <span>Deep Dive<small>обучалка-игра</small></span>
+      </div>
+      <div class="xp-wrap">
+        <span class="xp-badge" id="xp"><b>0 XP</b></span>
+        <button class="btn-reset" id="resetBtn">Сброс</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="app"><!-- rendered by app.js --></main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
