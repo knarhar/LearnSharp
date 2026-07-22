@@ -49,9 +49,9 @@ body{
   overflow-x:hidden;
 }
 
-/* Neon grid floor + glow, slowly drifting */
+/* Static neon grid floor + glow (no animation — keeps the GPU idle) */
 body::before{
-  content:""; position:fixed; inset:-40% 0 0 0; z-index:-2;
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
   background:
     radial-gradient(900px 500px at 78% -8%, rgba(255,61,176,.14), transparent 60%),
     radial-gradient(900px 520px at 12% 4%, rgba(41,224,255,.14), transparent 60%),
@@ -59,18 +59,7 @@ body::before{
     repeating-linear-gradient(0deg,   rgba(41,224,255,.06) 0 1px, transparent 1px 48px),
     repeating-linear-gradient(90deg,  rgba(41,224,255,.06) 0 1px, transparent 1px 48px);
   background-color:var(--bg);
-  animation:gridDrift 14s linear infinite;
 }
-@keyframes gridDrift{ from{ background-position:0 0,0 0,0 0,0 0,0 0; }
-                      to  { background-position:0 0,0 0,0 0,0 48px,48px 0; } }
-
-/* Faint moving scanlines */
-body::after{
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  background:repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.16) 2px 3px);
-  opacity:.35; animation:scan 8s linear infinite;
-}
-@keyframes scan{ from{ background-position:0 0; } to{ background-position:0 12px; } }
 
 code, pre, .mono{ font-family:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
 
@@ -100,11 +89,6 @@ a:hover{ text-decoration:underline; text-shadow:var(--glow-cyan); }
   background:linear-gradient(135deg, var(--cyan), var(--magenta));
   color:var(--accent-ink); font-weight:800; font-family:'JetBrains Mono', monospace;
   box-shadow:var(--glow-cyan);
-  animation:logoPulse 3.2s ease-in-out infinite;
-}
-@keyframes logoPulse{
-  0%,100%{ box-shadow:0 0 10px rgba(41,224,255,.45); }
-  50%    { box-shadow:0 0 20px rgba(255,61,176,.6); }
 }
 .brand small{ display:block; font-weight:500; color:var(--muted); font-size:var(--fs-14); line-height:1; letter-spacing:0; }
 
@@ -156,13 +140,10 @@ a:hover{ text-decoration:underline; text-shadow:var(--glow-cyan); }
 }
 .bar > span{
   display:block; height:100%;
-  background:linear-gradient(90deg, var(--cyan), var(--magenta), var(--cyan));
-  background-size:200% 100%;
+  background:linear-gradient(90deg, var(--cyan), var(--magenta));
   border-radius:999px; transition:width .5s ease;
   box-shadow:0 0 10px rgba(41,224,255,.5);
-  animation:shimmer 3s linear infinite;
 }
-@keyframes shimmer{ from{ background-position:0 0; } to{ background-position:200% 0; } }
 .progress-overall .label{ display:flex; justify-content:space-between; font-size:var(--fs-14); color:var(--muted); margin-bottom:6px; font-family:'JetBrains Mono', monospace; }
 
 .section-title{ font-family:'JetBrains Mono', monospace; font-size:var(--fs-20); margin:var(--sp-8) 0 var(--sp-4);
