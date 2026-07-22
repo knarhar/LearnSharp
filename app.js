@@ -192,11 +192,35 @@
       .map(lk => `<div class="link-row" style="opacity:.85">${lk.label}</div>`)
       .join("");
 
-    const optionsHtml = level.task.options.map((opt, i) =>
-      `<button class="opt" data-opt="${i}">
-         <span class="mark">${String.fromCharCode(65 + i)}</span>
-         <span>${opt}</span>
-       </button>`).join("");
+    const isWrite = level.task.kind === "write";
+    let taskHtml;
+    if (isWrite) {
+      taskHtml = `
+        <div class="quiz">
+          <p class="q">${level.task.q}</p>
+          <textarea id="answer" class="answer" rows="4"
+            placeholder="${(level.task.placeholder || 'Напиши ответ здесь...').replace(/"/g, '&quot;')}"
+            spellcheck="false"></textarea>
+          <div class="write-actions">
+            <button class="btn btn-primary" id="checkBtn">Проверить</button>
+            <button class="btn btn-ghost" id="revealBtn">Показать ответ</button>
+          </div>
+          <div class="feedback" id="feedback"></div>
+          <div class="solution" id="solution"></div>
+        </div>`;
+    } else {
+      const optionsHtml = level.task.options.map((opt, i) =>
+        `<button class="opt" data-opt="${i}">
+           <span class="mark">${String.fromCharCode(65 + i)}</span>
+           <span>${opt}</span>
+         </button>`).join("");
+      taskHtml = `
+        <div class="quiz">
+          <p class="q">${level.task.q}</p>
+          <div class="options" id="options">${optionsHtml}</div>
+          <div class="feedback" id="feedback"></div>
+        </div>`;
+    }
 
     const flat = allLevels();
     const globalIdx = flat.findIndex(l => l.id === levelId);
@@ -236,22 +260,61 @@
 
         <div class="block">
           <div class="block-label">🎯 Задание</div>
-          <div class="quiz">
-            <p class="q">${level.task.q}</p>
-            <div class="options" id="options">${optionsHtml}</div>
-            <div class="feedback" id="feedback"></div>
-          </div>
+          ${taskHtml}
         </div>
 
         <div class="lesson-nav">
-          ${prev ? `<button class="btn btn-ghost" data-nav="level/${prev.id}">← Назад</button>`
-                 : `<button class="btn btn-ghost" data-nav="world/${world.id}">← К списку</button>`}
+          ${prev ? `<button class="btn btn-ghost" data-nav="level/${prev.id}">← Назад</button>` : ''}
+          <button class="btn btn-ghost" data-nav="world/${world.id}">☰ К списку уроков</button>
           ${next ? `<button class="btn btn-primary" data-nav="level/${next.id}">Дальше →</button>`
                  : `<button class="btn btn-primary" data-nav="">Готово ✓</button>`}
         </div>
       </div>`;
 
-    wireQuiz(level);
+    if (isWrite) wireWrite(level); else wireQuiz(level);
+  }
+
+  // normalize free-text answer: lowercase + drop all whitespace
+  function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, ""); }
+
+  function wireWrite(level) {
+    const ta = document.getElementById("answer");
+    const checkBtn = document.getElementById("checkBtn");
+    const revealBtn = document.getElementById("revealBtn");
+    const feedback = document.getElementById("feedback");
+    const solutionBox = document.getElementById("solution");
+    if (!ta) return;
+
+    checkBtn.addEventListener("click", () => {
+      const user = norm(ta.value);
+      if (!user) {
+        feedback.className = "feedback show no";
+        feedback.innerHTML = "<b>Пусто.</b> Напиши ответ в поле выше.";
+        return;
+      }
+      const need = (level.task.must || []).map(norm);
+      const ok = need.every(fragment => user.includes(fragment));
+
+      feedback.className = "feedback show " + (ok ? "ok" : "no");
+      feedback.innerHTML = ok
+        ? "<b>Верно! ✓</b> " + level.task.explain
+        : "<b>Пока не то.</b> Проверь ключевые части ответа и попробуй ещё раз.";
+
+      if (ok) {
+        const wasDone = done.has(level.id);
+        markDone(level.id);
+        updateXp();
+        if (!wasDone) toast("+100 XP · урок пройден");
+      }
+    });
+
+    revealBtn.addEventListener("click", () => {
+      solutionBox.className = "solution show";
+      solutionBox.innerHTML =
+        `<div class="block-label">✅ Ответ</div>
+         <pre class="code"><code>${highlight(level.task.solution || "")}</code></pre>
+         <p class="prose" style="margin-top:8px">${level.task.explain}</p>`;
+    });
   }
 
   function wireQuiz(level) {

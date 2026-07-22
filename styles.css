@@ -252,6 +252,22 @@ pre.code code{ background:none; border:none; padding:0; color:#e6ebff; }
 .feedback.no{ background:rgba(255,138,138,.08); border:1px solid rgba(255,138,138,.35); }
 .feedback b{ color:#fff; }
 
+/* Write-your-own answer */
+.answer{
+  width:100%; box-sizing:border-box; resize:vertical; min-height:110px;
+  background:var(--code-bg); border:1px solid var(--border); border-radius:var(--r-md);
+  color:#e6ebff; padding:var(--sp-4);
+  font-family:'JetBrains Mono', ui-monospace, monospace; font-size:var(--fs-14); line-height:1.6;
+}
+.answer:focus{ outline:none; border-color:var(--accent); }
+.answer::placeholder{ color:#5b667f; }
+.write-actions{ display:flex; gap:var(--sp-3); margin-top:var(--sp-3); flex-wrap:wrap; }
+.write-actions .btn{ flex:0 0 auto; }
+
+.solution{ display:none; margin-top:var(--sp-4); }
+.solution.show{ display:block; }
+.solution .block-label{ color:var(--accent); }
+
 /* Lesson nav */
 .lesson-nav{ display:flex; gap:var(--sp-3); margin-top:var(--sp-8); flex-wrap:wrap; }
 .lesson-nav .btn{ flex:1; min-width:140px; }
