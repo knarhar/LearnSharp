@@ -13,6 +13,7 @@
 - **Variance** — ковариантность (`out`), контравариантность (`in`), инвариантность
 - **Enumerables** — `IEnumerable`/`IEnumerator`, `yield`, ленивое выполнение, LINQ
 - **FileStream I/O** — потоки, чтение/запись, `using`/`Dispose`, async
+- **Делегаты и события** — делегаты, `Func`/`Action`, лямбды, мультикаст, `event`, паттерн **EventBus**
 - **Design Patterns** — все 13 паттернов из лекции (Creational / Structural / Behavioral)
 
 ## Файлы
