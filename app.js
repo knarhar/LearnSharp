@@ -159,7 +159,7 @@
       // no progress yet — invite the user in with a glowing "Start" button
       cta = `<button class="btn btn-primary btn-pulse" data-nav="level/${nextId}">▶ Начать</button>`;
     } else {
-      cta = `<button class="btn" data-nav="level/${nextId}">▶ Продолжить</button>`;
+      cta = `<button class="btn btn-pulse-go" data-nav="level/${nextId}">▶ Продолжить</button>`;
     }
 
     app.innerHTML = `
