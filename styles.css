@@ -497,8 +497,8 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   /* on phones the "Сейчас" + count drop below the title, stacked vertically,
      so they stop crowding (and breaking up) the world name */
   .road-head{ align-items:flex-start; }
-  .road-meta{ flex:1 1 100%; flex-direction:column; align-items:flex-start;
-    gap:6px; margin-top:var(--sp-1); }
+  .road-meta{ flex:1 1 100%; align-items:center;
+    gap:var(--sp-2); margin-top:var(--sp-1); }
 }
 
 /* Respect users who prefer less motion */
