@@ -143,8 +143,10 @@
           <div class="road-head">
             <span class="road-ico">${w.icon}</span>
             <h3>${w.name}</h3>
-            ${state === "current" ? '<span class="road-tag">Сейчас</span>' : ""}
-            <span class="road-count">${p.done}/${p.total}</span>
+            <span class="road-meta">
+              ${state === "current" ? '<span class="road-tag">Сейчас</span>' : ""}
+              <span class="road-count">${p.done}/${p.total}</span>
+            </span>
           </div>
           <p class="road-blurb">${w.blurb}</p>
           <div class="road-levels">${dots}</div>
