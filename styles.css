@@ -237,7 +237,12 @@ a:hover{ text-decoration-color:var(--blue); }
 .block:nth-of-type(5) .block-label{ background:var(--purple); transform:rotate(1deg); }    /* Доки */
 .block:nth-of-type(6) .block-label{ background:var(--red); transform:rotate(-1deg); }  /* Задание */
 
-.prose{ font-size:var(--fs-16); line-height:1.7; max-width:72ch; }
+.prose{
+  font-size:var(--fs-16); line-height:1.7; max-width:72ch;
+  background:var(--paper-2);
+  border:var(--border); border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+  padding:var(--sp-6);
+}
 .prose p{ margin:0 0 var(--sp-3); }
 .prose ul{ margin:0 0 var(--sp-3); padding-left:22px; }
 .prose li{ margin:4px 0; }
@@ -247,6 +252,8 @@ a:hover{ text-decoration-color:var(--blue); }
   padding:0 6px; border-radius:6px; font-size:.9em; color:var(--ink); font-weight:600;
 }
 .prose b{ color:var(--ink); }
+/* prose reused inside a card or as a lone task line — no nested card there */
+.deep .prose, p.prose{ background:none; border:none; box-shadow:none; padding:0; }
 
 .deep{
   background:var(--paper-2);
