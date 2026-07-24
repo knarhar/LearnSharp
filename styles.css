@@ -52,6 +52,8 @@ html[data-theme="dark"]{
 }
 html[data-theme="dark"] .topbar{ background:var(--paper-2); }
 html[data-theme="dark"] pre.code{ background:#0d0b07; }
+/* keep the answer field a dark slab so the typed light text stays readable */
+html[data-theme="dark"] .answer{ background:#0d0b07; }
 html[data-theme="dark"] .tok-com{ color:#8a8270; }
 /* green heading + a thin yellow underline (band pushed to the very bottom,
    so it reads as an underline under the green text, not a block behind it) */
