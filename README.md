@@ -21,8 +21,3 @@
 - `styles.css` — оформление
 - `data.js` — весь учебный контент
 - `app.js` — логика (роутинг, прогресс, квизы, подсветка кода)
-
-## Деплой на GitHub Pages
-1. Залей эти файлы в репозиторий (ветка `main`, всё в корне).
-2. Settings → Pages → Source: **Deploy from a branch** → Branch: `main`, папка `/ (root)`.
-3. Через минуту сайт будет доступен по адресу `https://<username>.github.io/<repo>/`.
