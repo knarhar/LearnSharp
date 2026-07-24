@@ -457,6 +457,22 @@
     }
   });
 
+  /* ---------- day / night theme ---------- */
+  const THEME_KEY = "csharp-deepdive-theme";
+  const themeBtn = document.getElementById("themeBtn");
+  function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
+  function paintThemeBtn() { if (themeBtn) themeBtn.textContent = isDark() ? "☀️" : "🌙"; }
+  if (themeBtn) {
+    paintThemeBtn();
+    themeBtn.addEventListener("click", () => {
+      const goDark = !isDark();
+      if (goDark) document.documentElement.setAttribute("data-theme", "dark");
+      else document.documentElement.removeAttribute("data-theme");
+      try { localStorage.setItem(THEME_KEY, goDark ? "dark" : "light"); } catch (e) {}
+      paintThemeBtn();
+    });
+  }
+
   window.addEventListener("hashchange", router);
   updateXp();
   router();

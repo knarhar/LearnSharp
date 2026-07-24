@@ -9,7 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=13" />
+  <script>
+    // apply saved theme before first paint so there's no flash of light
+    try { if (localStorage.getItem("csharp-deepdive-theme") === "dark")
+      document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
   <header class="topbar">
@@ -20,6 +25,7 @@
       </div>
       <div class="xp-wrap">
         <span class="xp-badge" id="xp"><b>0 XP</b></span>
+        <button class="btn-theme" id="themeBtn" title="День / ночь" aria-label="Переключить тему">🌙</button>
         <button class="btn-reset" id="resetBtn" title="Сбросить прогресс" aria-label="Сбросить прогресс">Сброс</button>
       </div>
     </div>
@@ -28,6 +34,6 @@
   <main class="wrap" id="app"><!-- rendered by app.js --></main>
 
   <script src="data.js?v=6"></script>
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
