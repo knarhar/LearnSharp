@@ -28,7 +28,7 @@
   function updateXp() {
     const count = done.size;
     const total = allLevels().length;
-    xpEl.innerHTML = `<b>${count * XP_PER_LEVEL} XP</b> · ${count}/${total} уроков`;
+    xpEl.innerHTML = `<b>${count * XP_PER_LEVEL} XP</b><span class="xp-count"> · ${count}/${total} уроков</span>`;
   }
 
   /* ---------- helpers ---------- */

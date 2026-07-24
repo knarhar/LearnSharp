@@ -43,8 +43,9 @@ body{
   -webkit-font-smoothing:antialiased;
   min-height:100vh;
   position:relative;
-  overflow-x:hidden;
+  overflow-x:clip;
 }
+html{ overflow-x:clip; }
 
 /* Static Memphis backdrop: dot grid + a few colour blobs (no animation) */
 body::before{
@@ -369,6 +370,8 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   /* Reset shrinks to a compact ↺ icon so it never crowds the top bar */
   .btn-reset{ font-size:0; padding:10px 13px; }
   .btn-reset::before{ content:"↺"; font-size:18px; line-height:1; font-weight:800; }
+  /* keep the XP badge short on phones so it never stretches the top bar */
+  .xp-count{ display:none; }
 }
 
 /* Respect users who prefer less motion */
