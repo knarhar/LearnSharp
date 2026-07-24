@@ -34,6 +34,9 @@
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
 
+/* anything clickable shows the hand cursor */
+[data-nav]{ cursor:pointer; }
+
 body{
   background:var(--paper);
   color:var(--ink);
@@ -252,7 +255,10 @@ a:hover{ text-decoration-color:var(--blue); }
 .road-card{
   background:var(--paper-2); border:var(--border); border-radius:var(--r-md);
   box-shadow:var(--shadow-sm); padding:var(--sp-4); min-width:0;
+  transition:transform .12s ease, box-shadow .12s ease;
 }
+.road-card:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+.road-card:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
 .road-step.current .road-card{ box-shadow:var(--shadow); }
 .road-head{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; }
 .road-ico{ font-size:var(--fs-20); }

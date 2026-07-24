@@ -139,7 +139,7 @@
         <button class="road-node" data-nav="world/${w.id}" aria-label="${esc(w.name)}">
           <span>${full ? "✓" : (i + 1)}</span>
         </button>
-        <div class="road-card">
+        <div class="road-card" data-nav="world/${w.id}">
           <div class="road-head">
             <span class="road-ico">${w.icon}</span>
             <h3>${w.name}</h3>
