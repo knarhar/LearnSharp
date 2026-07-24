@@ -438,6 +438,12 @@
     const nav = e.target.closest("[data-nav]");
     if (nav) { e.preventDefault(); location.hash = nav.dataset.nav; }
   });
+  // keyboard: Enter/Space activates a focused nav element (e.g. the logo)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const nav = e.target.closest("[data-nav][tabindex]");
+    if (nav) { e.preventDefault(); location.hash = nav.dataset.nav; }
+  });
 
   document.getElementById("resetBtn").addEventListener("click", () => {
     if (confirm("Сбросить весь прогресс и XP?")) {
