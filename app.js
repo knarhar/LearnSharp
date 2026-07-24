@@ -97,11 +97,86 @@
     window.scrollTo(0, 0);
     if (hash.startsWith("level/")) return renderLesson(hash.slice(6));
     if (hash.startsWith("world/")) return renderWorld(hash.slice(6));
+    if (hash === "worlds") return renderWorlds();
     return renderHome();
   }
 
-  /* ---------- home ---------- */
+  /* первый непройденный урок во всём курсе (по порядку миров) */
+  function firstUnfinished() {
+    for (const w of WORLDS) {
+      for (const l of w.levels) {
+        if (!done.has(l.id)) return { world: w, level: l };
+      }
+    }
+    return null; // всё пройдено
+  }
+
+  /* ---------- home = roadmap (дорожка прохождения) ---------- */
   function renderHome() {
+    const total = allLevels().length;
+    const d = done.size;
+    const pct = Math.round(d / total * 100);
+    const next = firstUnfinished();
+    const nextId = next ? next.level.id : null;
+
+    const steps = WORLDS.map((w, i) => {
+      const p = worldProgress(w);
+      const full = p.total > 0 && p.done === p.total;
+      const isCurrent = next && next.world.id === w.id;
+      const state = full ? "done" : (isCurrent ? "current" : "upcoming");
+
+      const dots = w.levels.map((l, j) => {
+        const isDone = done.has(l.id);
+        const isNext = l.id === nextId;
+        const cls = isDone ? "done" : (isNext ? "next" : "");
+        const face = isDone ? "✓" : (isNext ? "▶" : (j + 1));
+        return `<button class="road-dot ${cls}" data-nav="level/${l.id}"
+                  title="${esc(l.title)}">${face}</button>`;
+      }).join("");
+
+      return `
+      <li class="road-step ${state}">
+        <button class="road-node" data-nav="world/${w.id}" aria-label="${esc(w.name)}">
+          <span>${full ? "✓" : (i + 1)}</span>
+        </button>
+        <div class="road-card">
+          <div class="road-head">
+            <span class="road-ico">${w.icon}</span>
+            <h3>${w.name}</h3>
+            ${state === "current" ? '<span class="road-tag">Сейчас</span>' : ""}
+            <span class="road-count">${p.done}/${p.total}</span>
+          </div>
+          <p class="road-blurb">${w.blurb}</p>
+          <div class="road-levels">${dots}</div>
+        </div>
+      </li>`;
+    }).join("");
+
+    const cta = next
+      ? `<button class="btn" data-nav="level/${nextId}">▶ Продолжить</button>`
+      : `<button class="btn" data-nav="worlds">🎉 Всё пройдено — к списку миров</button>`;
+
+    app.innerHTML = `
+      <div class="view">
+        <section class="hero">
+          <h1>Твой путь по C#</h1>
+          <p>Иди по дорожке сверху вниз. Каждый мир — это тема, а точки внутри — уроки.
+             Зелёное — пройдено, жёлтое — где ты сейчас. Прогресс хранится в браузере.</p>
+          <div class="progress-overall">
+            <div class="label"><span>Общий прогресс</span><span>${d}/${total} · ${pct}%</span></div>
+            <div class="bar"><span style="width:${pct}%"></span></div>
+          </div>
+          <div class="hero-actions">
+            ${cta}
+            <button class="btn btn-ghost" data-nav="worlds">Все миры списком</button>
+          </div>
+        </section>
+        <ol class="roadmap">${steps}</ol>
+      </div>`;
+  }
+
+  /* ---------- worlds (список миров плитками) ---------- */
+  function renderWorlds() {
     const total = allLevels().length;
     const d = done.size;
     const pct = Math.round(d / total * 100);
@@ -125,17 +200,15 @@
 
     app.innerHTML = `
       <div class="view">
-        <section class="hero">
-          <h1>C# на глубоком уровне — как игра</h1>
-          <p>Проходи миры по одному. В каждом уроке: понятная теория, живой пример кода,
-             ссылки на доки и маленькое задание с проверкой. Прогресс сохраняется здесь же,
-             в браузере.</p>
+        <div class="crumbs"><a data-nav="">Путь</a> <span>›</span> <span>Все миры</span></div>
+        <section class="hero" style="margin-bottom:16px">
+          <h1 style="font-size:var(--fs-24)">Все миры</h1>
+          <p style="font-size:var(--fs-16)">Выбери любой мир и открой его уроки.</p>
           <div class="progress-overall">
             <div class="label"><span>Общий прогресс</span><span>${d}/${total} · ${pct}%</span></div>
             <div class="bar"><span style="width:${pct}%"></span></div>
           </div>
         </section>
-        <h2 class="section-title">Миры</h2>
         <div class="worlds">${cards}</div>
       </div>`;
   }
@@ -161,7 +234,7 @@
     const p = worldProgress(w);
     app.innerHTML = `
       <div class="view">
-        <div class="crumbs"><a data-nav="">Миры</a> <span>›</span> <span>${w.name}</span></div>
+        <div class="crumbs"><a data-nav="">Путь</a> <span>›</span> <a data-nav="worlds">Миры</a> <span>›</span> <span>${w.name}</span></div>
         <div class="hero" style="margin-bottom:16px">
           <h1 style="font-size:var(--fs-24)">${w.icon} ${w.name}</h1>
           <p style="font-size:var(--fs-16)">${w.blurb}</p>
@@ -230,7 +303,7 @@
     app.innerHTML = `
       <div class="view lesson">
         <div class="crumbs">
-          <a data-nav="">Миры</a> <span>›</span>
+          <a data-nav="worlds">Миры</a> <span>›</span>
           <a data-nav="world/${world.id}">${world.name}</a> <span>›</span>
           <span>Уровень ${idxInWorld + 1}</span>
         </div>

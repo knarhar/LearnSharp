@@ -218,6 +218,70 @@ a:hover{ text-decoration-color:var(--blue); }
   font-family:'JetBrains Mono', monospace; font-weight:700; }
 .level-row.done .status{ color:var(--teal); -webkit-text-stroke:.4px var(--ink); }
 
+/* ============ Roadmap (home page path) ============ */
+.hero-actions{ display:flex; gap:var(--sp-3); flex-wrap:wrap; margin-top:var(--sp-6); }
+
+.roadmap{ list-style:none; margin:var(--sp-8) 0 0; padding:0; }
+.road-step{
+  position:relative;
+  display:grid; grid-template-columns:56px 1fr; gap:var(--sp-4);
+  padding-bottom:var(--sp-6);
+}
+/* vertical line joining the world markers */
+.road-step::before{
+  content:""; position:absolute; left:26px; top:60px; bottom:-4px; width:4px;
+  background:var(--ink); border-radius:2px; opacity:.35; z-index:0;
+}
+.road-step:last-child::before{ display:none; }
+
+.road-node{
+  position:relative; z-index:1;
+  width:56px; height:56px; border-radius:14px;
+  border:var(--border); box-shadow:var(--shadow-sm);
+  background:var(--paper-2); color:var(--ink); cursor:pointer;
+  font-family:'JetBrains Mono', monospace; font-weight:800; font-size:var(--fs-20);
+  display:grid; place-items:center;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.road-node:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink); }
+.road-node:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+.road-step.done .road-node{ background:var(--teal); }
+.road-step.current .road-node{ background:var(--yellow); transform:rotate(-3deg); }
+.road-step.current .road-node:hover{ transform:rotate(-3deg) translate(-2px,-2px); }
+
+.road-card{
+  background:var(--paper-2); border:var(--border); border-radius:var(--r-md);
+  box-shadow:var(--shadow-sm); padding:var(--sp-4); min-width:0;
+}
+.road-step.current .road-card{ box-shadow:var(--shadow); }
+.road-head{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; }
+.road-ico{ font-size:var(--fs-20); }
+.road-head h3{ margin:0; font-family:'JetBrains Mono', monospace; font-size:var(--fs-18);
+  font-weight:800; flex:1; min-width:0; }
+.road-tag{
+  font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:800;
+  text-transform:uppercase; letter-spacing:1px;
+  background:var(--yellow); border:2px solid var(--ink); border-radius:999px;
+  padding:2px 10px; transform:rotate(-2deg);
+}
+.road-count{
+  font-family:'JetBrains Mono', monospace; font-size:var(--fs-14); white-space:nowrap;
+  background:var(--paper); border:2px solid var(--ink); border-radius:999px; padding:2px 10px;
+}
+.road-blurb{ margin:var(--sp-2) 0 var(--sp-3); color:var(--muted);
+  font-size:var(--fs-14); line-height:1.5; }
+.road-levels{ display:flex; flex-wrap:wrap; gap:8px; }
+.road-dot{
+  min-width:36px; height:36px; padding:0 9px; border-radius:9px;
+  border:2px solid var(--ink); background:var(--paper); color:var(--ink);
+  font-family:'JetBrains Mono', monospace; font-weight:700; font-size:var(--fs-14);
+  cursor:pointer; display:grid; place-items:center;
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.road-dot:hover{ transform:translateY(-2px); box-shadow:2px 2px 0 var(--ink); }
+.road-dot.done{ background:var(--teal); }
+.road-dot.next{ background:var(--yellow); box-shadow:0 0 0 3px rgba(22,17,11,.15); }
+
 /* ============ Lesson ============ */
 .lesson{ max-width:940px; }
 .lesson h2{ font-family:'JetBrains Mono', monospace; font-size:var(--fs-32); margin:0 0 6px;
