@@ -53,8 +53,12 @@ html[data-theme="dark"]{
 html[data-theme="dark"] .topbar{ background:var(--paper-2); }
 html[data-theme="dark"] pre.code{ background:#0d0b07; }
 html[data-theme="dark"] .tok-com{ color:#8a8270; }
-/* colour the big heading green instead of a shouty bright block */
-html[data-theme="dark"] .hero h1{ color:var(--teal); background:none; padding:0; }
+/* green heading + a thin yellow underline (band pushed to the very bottom,
+   so it reads as an underline under the green text, not a block behind it) */
+html[data-theme="dark"] .hero h1{
+  color:var(--teal);
+  background:linear-gradient(transparent 86%, var(--yellow) 86%);
+}
 /* smooth cross-fade when flipping the switch */
 body, .topbar, .world-card, .road-card, .level-row, .quiz, .link-row, .deep,
 .opt, .bar, .xp-badge, .btn-reset, .btn-theme, .prose{
