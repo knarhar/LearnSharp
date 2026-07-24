@@ -2091,5 +2091,25 @@ alarm.Trigger("дым");   // Тревога: дым`,
   }
 ];
 
+// Порядок миров на сайте (по id). Меняй здесь — контент трогать не нужно.
+const WORLD_ORDER = [
+  "dsa",           // Структуры данных и алгоритмы
+  "enumerables",   // Инумерабл
+  "delegates",     // Делегаты и события
+  "generics",      // Дженерики
+  "variance",      // Вариантность (ковариантность/контравариантность)
+  "filestream",    // FileStream I/O
+  "creational",    // Паттерны — порождающие
+  "structural",    // Паттерны — структурные
+  "behavioral",    // Паттерны — поведенческие
+];
+const orderedWorlds = WORLD_ORDER
+  .map(id => WORLDS.find(w => w.id === id))
+  .filter(Boolean);
+// на всякий случай добавим миры, не попавшие в список, в конец
+for (const w of WORLDS) {
+  if (!orderedWorlds.includes(w)) orderedWorlds.push(w);
+}
+
 // доступно глобально для app.js
-window.WORLDS = WORLDS;
+window.WORLDS = orderedWorlds;
