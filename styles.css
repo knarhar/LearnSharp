@@ -218,8 +218,10 @@ a:hover{ text-decoration-color:var(--blue); }
 .level-info h4{ margin:0 0 2px; font-size:var(--fs-18); font-family:'JetBrains Mono', monospace; font-weight:800; }
 .level-info span{ color:var(--muted); font-size:var(--fs-14); }
 .level-row .status{ font-size:var(--fs-14); color:var(--ink); white-space:nowrap;
-  font-family:'JetBrains Mono', monospace; font-weight:700; }
-.level-row.done .status{ color:var(--teal); -webkit-text-stroke:.4px var(--ink); }
+  font-family:'JetBrains Mono', monospace; font-weight:700;
+  background:var(--yellow); border:2px solid var(--ink); border-radius:999px;
+  padding:4px 12px; }
+.level-row.done .status{ background:var(--teal); color:var(--ink); }
 
 /* ============ Roadmap (home page path) ============ */
 .hero-actions{ display:flex; gap:var(--sp-3); flex-wrap:wrap; margin-top:var(--sp-6); }
