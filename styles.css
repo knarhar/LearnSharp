@@ -152,7 +152,7 @@ a:hover{ text-decoration-color:var(--blue); }
   padding:4px 14px; border-radius:var(--r-sm); transform:rotate(-1.5deg); }
 
 .worlds{ display:grid; gap:var(--sp-6);
-  grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); }
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
 .world-card{
   text-align:left; width:100%;
   background:var(--paper-2);
@@ -195,7 +195,7 @@ a:hover{ text-decoration-color:var(--blue); }
 .crumbs a{ color:var(--ink); }
 
 .levels{ display:grid; gap:var(--sp-4); margin-top:var(--sp-6);
-  grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); }
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
 .level-row{
   display:flex; align-items:center; gap:var(--sp-4); text-align:left; width:100%;
   background:var(--paper-2); border:var(--border); border-radius:var(--r-md); box-shadow:var(--shadow-sm);
@@ -366,6 +366,9 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   .brand small{ display:none; }
   .world-card{ padding:var(--sp-4); }
   .lesson-nav .btn{ min-width:120px; }
+  /* Reset shrinks to a compact ↺ icon so it never crowds the top bar */
+  .btn-reset{ font-size:0; padding:10px 13px; }
+  .btn-reset::before{ content:"↺"; font-size:18px; line-height:1; font-weight:800; }
 }
 
 /* Respect users who prefer less motion */
