@@ -152,9 +152,15 @@
       </li>`;
     }).join("");
 
-    const cta = next
-      ? `<button class="btn" data-nav="level/${nextId}">▶ Продолжить</button>`
-      : `<button class="btn" data-nav="worlds">🎉 Всё пройдено — к списку миров</button>`;
+    let cta;
+    if (!next) {
+      cta = `<button class="btn" data-nav="worlds">🎉 Всё пройдено — к списку миров</button>`;
+    } else if (d === 0) {
+      // no progress yet — invite the user in with a glowing "Start" button
+      cta = `<button class="btn btn-primary btn-pulse" data-nav="level/${nextId}">▶ Начать</button>`;
+    } else {
+      cta = `<button class="btn" data-nav="level/${nextId}">▶ Продолжить</button>`;
+    }
 
     app.innerHTML = `
       <div class="view">

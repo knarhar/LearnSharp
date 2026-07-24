@@ -124,6 +124,13 @@ a:hover{ text-decoration-color:var(--blue); }
 .btn-primary{ background:var(--pink); }
 .btn-ghost{ background:var(--paper-2); }
 .btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:var(--shadow-sm); }
+/* glowing "Начать" — draws the eye when there's no progress yet */
+.btn-pulse{ animation:btnPulse 1.8s ease-in-out infinite; }
+.btn-pulse:hover, .btn-pulse:active{ animation:none; }
+@keyframes btnPulse{
+  0%,100%{ box-shadow:var(--shadow), 0 0 0 0 rgba(255,77,141,.55); }
+  50%{     box-shadow:var(--shadow), 0 0 0 12px rgba(255,77,141,0); }
+}
 
 /* ============ Home / worlds ============ */
 .hero{ margin:var(--sp-4) 0 var(--sp-8); }
