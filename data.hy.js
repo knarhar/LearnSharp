@@ -2085,6 +2085,972 @@ alarm.Trigger("ծուխ");   // Ահազանգ՝ ծուխ`,
       }
     ]
   },
+
+  /* ================= WORLD 10: NAMESPACES / ASSEMBLIES / NUGET ================= */
+  {
+    id: "assemblies",
+    name: "Namespaces, Assemblies & NuGet",
+    icon: "▦",
+    blurb: "Ինչպես է կոդը հասցեներ ստանում, վերածվում անձնագրով DLL-ի և գալիս փաթեթներով NuGet-ից։",
+    levels: [
+      {
+        id: "asm-1",
+        title: "Namespace — type-ի հասցեն",
+        subtitle: "Քաղաք, փողոց, տուն — որ անունները չշփոթվեն",
+        theory: `
+<p>Մեծ քաղաքում ապրում են հարյուրավոր Անիներ։ Նրանց տարբերում են հասցեով՝ «Աբովյան փողոցի Անին»
+և «Մաշտոցի պողոտայի Անին»։ <b>namespace</b>-ը հենց այդպիսի հասցե է type-երի համար։ Type-ի լրիվ
+անունը նրա հասցեն է՝ <code>Acme.Shop.Order</code>-ը և <code>Contoso.Crm.Order</code>-ը երկու
+տարբեր class են, թեև կարճ անունը նույնն է։</p>
+<p>Կարևոր է հասկանալ, թե namespace-ը ինչ <i>չի</i> անում՝ ֆայլ չի ստեղծում, թղթապանակ չի
+ստեղծում և assembly-ին հավասար չէ։ Նա միայն անուններ է խմբավորում։ «Թղթապանակ = namespace»
+համընկնումը մարդկանց հարմար պայմանավորվածությունն է, ոչ թե compiler-ի կանոն։</p>
+<p>Ամեն անգամ լրիվ հասցեներ գրելը ցավալի է, դրա համար կա <code>using</code>-ը՝</p>
+<ul>
+<li><code>using System.IO;</code> — «այստեղի type-երը կանչիր կարճ անունով»։</li>
+<li><code>using Json = System.Text.Json;</code> — կեղծանուն (alias), փրկում է անունների բախման ժամանակ։</li>
+<li><code>using static System.Math;</code> — քաշում է static անդամները՝ <code>Math.PI</code>-ի
+փոխարեն պարզապես <code>PI</code>։</li>
+<li><code>global using System;</code> — import միանգամից ամբողջ project-ի վրա, սովորաբար մեկ
+ֆայլում՝ <code>GlobalUsings.cs</code>։</li>
+</ul>
+<p>Իսկ project-ի <code>ImplicitUsings</code> հատկությունը այն է, երբ SDK-ն ինքն է քեզ համար
+ավելացնում մի փունջ <code>global using</code> (<code>obj/</code>-ի տակ գեներացված ֆայլում)։ Դրա
+համար էլ նոր project-ում <code>Console.WriteLine</code>-ը աշխատում է առանց ոչ մի
+<code>using</code> տողի։</p>`,
+        code: `// namespace = հասցե, ոչ թե ֆայլ և ոչ թե թղթապանակ
+namespace Acme.Shop.Orders;   // file-scoped ձև, C# 10+
+
+public class Order { }
+
+// ---------- մեկ այլ ֆայլ ----------
+using System;
+using Acme.Shop.Orders;
+
+// երկու տարբեր Order — բաժանում ենք կեղծանուններով
+using ShopOrder = Acme.Shop.Order;
+using CrmOrder  = Contoso.Crm.Order;
+
+// static անդամները առանց type-ի անվան՝ Math.PI -> PI
+using static System.Math;
+
+// ---------- GlobalUsings.cs: import ամբողջ project-ի վրա ----------
+global using System.Linq;
+global using System.Collections.Generic;
+
+// լրիվ անունը միշտ աշխատում է, նույնիսկ առանց using
+var direct = new Acme.Shop.Orders.Order();
+double area = Round(PI * Pow(2, 2), 2);   // սա using static-ից է`,
+        deep: `<p><b>Ավելի խորը։</b> Մեկ assembly-ն հանգիստ պահում է շատ namespace — և հակառակը՝
+մեկ namespace-ը տեխնիկապես կարող է քսված լինել մի քանի assembly-ի վրա (այդպես հազվադեպ են անում,
+որովհետև հետո պարզ չի լինում, թե որ DLL-ն միացնել)։ Եվ ևս մեկ բան՝ namespace-ի անվանափոխումը
+<b>կոտրող փոփոխություն</b> է բոլորի համար, ովքեր արդեն օգտագործում են քո library-ն՝ իրենց
+<code>using</code>-ը կդադարի compile լինել։ Դրա համար հասցեն ընտրում են մեկ անգամ և երկար
+ժամանակով։</p>`,
+        links: [
+          { label: "MS Learn — namespace", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/namespace" },
+          { label: "MS Learn — using directive (alias, static, global)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive" }
+        ],
+        task: {
+          kind: "write",
+          q: "Դու չես ուզում project-ի ամեն ֆայլում գրել using System.Linq; տողը։ Գրիր մեկ դիրեկտիվ, որը այդ namespace-ը import է անում project-ի ԲՈԼՈՐ ֆայլերում։",
+          placeholder: "դիրեկտիվ...",
+          must: ["globalusing", "system.linq"],
+          solution: "global using System.Linq;",
+          explain: "global using-ը գործում է ամբողջ project-ի վրա։ Սովորաբար այդպիսի տողերը հավաքում են մեկ GlobalUsings.cs ֆայլում, որ հեշտ լինի գտնել դրանք։"
+        }
+      },
+      {
+        id: "asm-2",
+        title: "Assembly-ն և իր manifest-ը",
+        subtitle: "Ինչ կա DLL-ի ներսում՝ կոդից բացի",
+        theory: `
+<p>Պատկերացրու ծանրոց։ Ներսում՝ ապրանքը, դրսում՝ պիտակը՝ ումից է, ինչ կա ներսում, ինչ էլ պետք է
+ավելացնել։ <b>Assembly</b>-ն հենց այդպիսի ծանրոց է կոդով։ Սովորաբար դա մեկ <code>.dll</code>
+ֆայլ է (library) կամ ծրագրի կատարվող ելքը։ Assembly-ն այն նվազագույն միավորն է, որը դու
+<i>մատակարարում</i> ես, <i>version</i> ես տալիս և որին հղվում ես։</p>
+<p>Assembly-ի ներսում չորս բան կա՝</p>
+<ul>
+<li><b>IL</b> (Intermediate Language) — compile արված կոդը, դեռ ոչ մեքենայական։</li>
+<li><b>Metadata</b> — type-երի, մեթոդների, դաշտերի, ստորագրությունների նկարագրությունը։</li>
+<li><b>Manifest</b> — պիտակը ծանրոցի վրա՝ անուն, version, culture, բանալի, պետք եղած assembly-ների ցուցակ։</li>
+<li><b>Resources</b> — ոչ պարտադիրը՝ տողեր, նկարներ, ներդրված ֆայլեր։</li>
+</ul>
+<p>Manifest-ը առանձին ֆայլիկ չէ, որը դու ձեռքով ես ուղղում։ Compiler-ը այն ներդնում է հենց նույն
+DLL-ի մեջ։ Հենց manifest-ով է runtime-ը հասկանում, թե ինչ բեռնեց և ինչ էլ պետք է քաշի։</p>
+<p>Եվս մի բան, որ շփոթում են՝ <code>internal</code>-ը <i>assembly</i>-ի սահմանն է, ոչ թե
+namespace-ի։ DLL-ից դուրս երևում է միայն <code>public</code>-ը։</p>`,
+        code: `// Acme.Shop.dll-ի ներսում:
+//   Manifest   — «ով եմ ես» + «ինչ է ինձ պետք»
+//   Metadata   — type-եր, մեթոդներ, դաշտեր
+//   IL         — բուն կոդը
+//   Resources  — ոչ պարտադիր տողեր և նկարներ
+
+using System.Reflection;
+
+Assembly asm = Assembly.GetExecutingAssembly();
+
+Console.WriteLine(asm.FullName);
+// Acme.Shop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+
+Console.WriteLine(asm.GetName().Name);     // Acme.Shop
+Console.WriteLine(asm.GetName().Version);  // 1.0.0.0
+
+// կախվածությունների ցուցակը — նույնպես manifest-ի տողեր
+foreach (AssemblyName dep in asm.GetReferencedAssemblies())
+    Console.WriteLine(dep.Name + " " + dep.Version);
+
+public class VisibleOutsideAssembly { }   // երևում է նրանց, ովքեր միացրել են DLL-ը
+internal class OnlyInsideThisAssembly { } // երևում է միայն այս assembly-ի ներսում`,
+        deep: `<p><b>Ավելի խորը։</b> Պատմականորեն assembly-ն կարող էր բաղկացած լինել մի քանի
+ֆայլից՝ <i>module</i>-ներից (<code>.netmodule</code>)։ Manifest-ը ընկած էր միայն դրանցից մեկում,
+իսկ մնացածները պարզապես պատկանում էին նույն identity-ին՝ դրսից դա նույնպես <b>մեկ</b> assembly
+է, և <code>internal</code>-ը ընդհանուր էր նրա բոլոր module-ների համար։ Այդպես հավաքում էին «C#
+գումարած VB մեկ assembly-ում» և մասերը բեռնում ըստ պահանջի։ Այսօր <code>dotnet build</code>-ը
+սարքում է մեկ project → մեկ assembly → մեկ ֆայլ, և module-ներին կհանդիպես միայն հին
+փաստաթղթերում։</p>`,
+        links: [
+          { label: "MS Learn — Assemblies in .NET", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/" },
+          { label: "MS Learn — Assembly manifest", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/manifest" }
+        ],
+        task: {
+          q: "Assembly-ի ո՞ր մասն է նկարագրում հենց assembly-ն՝ նրա անունը, version-ը և պետք եղած կախվածությունների ցուցակը?",
+          options: [
+            "IL — մեթոդների compile արված կոդը",
+            "Manifest",
+            "Resources — ներդրված տողեր և նկարներ",
+            "Metadata՝ type-երի և մեթոդների ստորագրությունների մասին"
+          ],
+          answer: 1,
+          explain: "Manifest-ը assembly-ի «վկայականն ու բեռնագիրն» է՝ identity գումարած կախվածությունների ցանկը։ Metadata-ն նկարագրում է type-երը, IL-ը՝ կոդը, resources-ը՝ տվյալները։"
+        }
+      },
+      {
+        id: "asm-3",
+        title: "Identity և version-ներ",
+        subtitle: "Ֆայլի անունը դեռ անձնագիր չէ",
+        theory: `
+<p>«Հովհաննիսյան» ազգանունով երկու մարդու չեն շփոթում, որովհետև ամեն մեկն ունի անձնագիր՝
+ազգանուն, ծննդյան ամսաթիվ, համար։ Assembly-ի մոտ նույնն է։ Նրա <b>identity</b>-ն չորս դաշտ է՝
+<code>simple name</code>, <code>version</code>, <code>culture</code> և
+<code>public key token</code>։ Նույն <code>Utils.dll</code> ֆայլի անունով երկու DLL runtime-ի
+համար տարբեր assembly-ներ են, եթե թեկուզ մեկ դաշտ տարբերվում է։</p>
+<p>Version-ը գրվում է այսպես՝ <code>Major.Minor.Build.Revision</code>։ Major — կոտրող
+փոփոխություններ, Minor — նոր հնարավորություններ առանց կոտրելու, Build — ուղղումներ, Revision —
+build-երի հաշվիչ։</p>
+<p>Project-ում միանգամից ապրում են մի քանի «version», և դրանք տարբեր բաներ են՝</p>
+<ul>
+<li><code>AssemblyVersion</code> — identity-ի մասը, պատմականորեն նրանով էր գնում binding-ը։</li>
+<li><code>FileVersion</code> — միայն ֆայլի հատկությունները Windows-ում, բեռնման վրա չի ազդում։</li>
+<li><code>InformationalVersion</code> — մարդկանց և log-երի համար, կարելի է commit-ի hash ավելացնել։</li>
+<li><code>Version</code> — NuGet-փաթեթի version-ը ըստ SemVer-ի։</li>
+</ul>
+<p><b>Strong name</b>-ը assembly-ի ստորագրությունն է բանալիների զույգով։ Identity-ում հայտնվում
+է <code>PublicKeyToken</code>-ը՝ public բանալու կարճ hash-ը։ Այն ապացուցում է ծագումն ու ֆայլի
+ամբողջականությունը, բայց <i>ինքնին</i> կոդը անվտանգ չի դարձնում։</p>`,
+        code: `<!-- Acme.Billing.csproj -->
+<PropertyGroup>
+  <!-- NuGet-փաթեթի version (SemVer) -->
+  <Version>2.4.1</Version>
+
+  <!-- assembly-ի identity-ի մասը՝ նրանով էր գնում binding-ը -->
+  <AssemblyVersion>2.4.1.0</AssemblyVersion>
+
+  <!-- միայն ֆայլի հատկությունները Windows-ի explorer-ում -->
+  <FileVersion>2.4.1.1234</FileVersion>
+
+  <!-- մարդկանց և log-երի համար՝ կարելի է commit ավելացնել -->
+  <InformationalVersion>2.4.1+git.abc123</InformationalVersion>
+
+  <!-- strong name: ստորագրություն բանալիով (առաջ պետք էր GAC-ի համար) -->
+  <SignAssembly>true</SignAssembly>
+  <AssemblyOriginatorKeyFile>acme.snk</AssemblyOriginatorKeyFile>
+</PropertyGroup>
+
+<!-- Լրիվ identity-ն կարդացվում է այսպես՝
+
+Acme.Billing, Version=2.4.1.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+ ^simple name          ^version         ^culture             ^public բանալու hash
+
+Culture=neutral — սովորական assembly; hy-AM տիպի culture լինում է
+թարգմանություններով satellite-assembly-ների մոտ։                        -->`,
+        deep: `<p><b>Ավելի խորը։</b> Version-ը կոտրելը երբեմն օգտակար է, երբեմն՝ ցավոտ։ Եթե ամեն
+patch-ի <code>AssemblyVersion</code>-ը բարձրացնում ես, ապա .NET Framework-ի վրա բոլոր նրանք,
+ովքեր compile էին արվել նախորդ version-ի դեմ, խնդրում են հենց այդ ճշգրիտ համարը — և առանց
+redirect-ի ընկնում են։ Դրա համար շատ library-ներ <code>AssemblyVersion</code>-ը պահում են
+«կոպիտ» (օրինակ՝ <code>2.0.0.0</code> ամբողջ major-գծի վրա), իսկ ճշգրիտ build-ը ցույց են տալիս
+<code>FileVersion</code>-ի և <code>InformationalVersion</code>-ի միջոցով։ Ժամանակակից .NET-ում
+version-ը ընտրվում է restore-ի փուլում, այնպես որ խնդիրը մեղմ է — բայց սովորությունը մնացել
+է։</p>`,
+        links: [
+          { label: "MS Learn — Assembly names (identity)", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/identify" },
+          { label: "MS Learn — Strong-named assemblies", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/strong-named" }
+        ],
+        task: {
+          q: "Սկավառակի վրա երկու DLL կա, երկուսն էլ կոչվում են Utils.dll։ Ի՞նչն է դրանք դարձնում տարբեր assembly-ներ runtime-ի տեսանկյունից?",
+          options: [
+            "Ֆայլի տարբեր չափը",
+            "Ստեղծման տարբեր ամսաթիվ և ժամ",
+            "Identity-ի տարբերությունները՝ version, culture կամ public key token",
+            "Այն, որ դրանք ընկած են տարբեր թղթապանակներում"
+          ],
+          answer: 2,
+          explain: "Ֆայլի անունը մարդկանց համար է։ Identity-ն simple name + version + culture + public key token է։ Այս դաշտերից որևէ մեկի տարբերությունը նշանակում է այլ assembly։"
+        }
+      },
+      {
+        id: "asm-4",
+        title: "Private, shared և «DLL Hell»",
+        subtitle: "Իր պատճենը ուսապարկում՝ ընդհանուր պահեստի դեմ",
+        theory: `
+<p>Գործիքի հետ ապրելու երկու տարբերակ։ Առաջինը՝ ամեն մեկը իր պտուտակահանն ունի ուսապարկում —
+ավելի ծանր է, բայց ոչ ոք ոչ մեկից չի խլում։ Երկրորդը՝ մեկ պտուտակահան ընդհանուր պահեստում —
+խնայող է, բայց եթե մեկը այն փոխարինի ուրիշ մոդելով, բոլորի աշխատանքը կփչանա։ Սա հենց
+<b>private</b> և <b>shared</b> assembly-ներն են։</p>
+<p><b>Private assembly</b>-ն ընկած է ծրագրի թղթապանակում՝ նրա կողքին։ Մեկ մեքենայի վրա երկու
+ծրագիր հանգիստ օգտագործում են նույն library-ի տարբեր version-ներ՝ ամեն մեկն իր պատճենն ունի։ Սա
+լռելյայն վարքն է ամբողջ ժամանակակից .NET-ում։</p>
+<p><b>Shared assembly</b>-ն մեկ տեղադրված պատճեն է շատ ծրագրերի համար։ .NET Framework-ի վրա դա
+<b>GAC</b>-ն էր (Global Assembly Cache)՝ նա կարողանում էր version-ները պահել side-by-side, բայց
+պահանջում էր strong name, առանձին տեղադրում և թարմացման քաղաքականություններ։ Հենց սրա շուրջ էլ
+ծնվեց <b>DLL Hell</b> անունը՝ թարմացրիր ընդհանուր library-ն — և հայտնի չէ, թե որ ծրագիրը
+կոտրվեց։</p>
+<p>.NET Core-ում և հետո դասական GAC չկա։ «Ընդհանուրը» այսօր NuGet-cache-ն է, runtime-ի shared
+framework-ը և, ցանկության դեպքում, մեկ version-ների ցուցակ ամբողջ repository-ի վրա։ Կանոնը՝
+<i>լռելյայն private, կիսվում ենք փաթեթների միջոցով</i>։</p>`,
+        code: `# Ժամանակակից՝ private պատճեններ ծրագրի կողքին
+dotnet publish -c Release
+
+# MyApp/
+#   MyApp.dll
+#   Acme.Billing.dll            <- 2.0 version-ի իր պատճենը
+#   Acme.Shared.dll
+#   MyApp.deps.json             <- կախվածությունների գրաֆը, նախապես լուծված
+#   MyApp.runtimeconfig.json    <- runtime-ի կարգավորումները
+
+# Նույն մեքենայի վրա մեկ այլ ծրագիր:
+# OtherApp/
+#   Acme.Billing.dll            <- 1.0 version, և ոչ ոք ոչ մեկին չի խանգարում
+
+# ------------------------------------------------------------------
+# .NET Framework-ի դասականը՝ ընդհանուր GAC պահեստ
+# GAC
+#  |-- Acme.Billing 1.0.0.0     <- side-by-side version-ներ
+#  |-- Acme.Billing 2.0.0.0
+# Պահանջում էր strong name և տեղադրում համակարգում
+# ------------------------------------------------------------------
+
+<!-- Կարկատան version-ների բախման համար app.config-ում (.NET Framework) -->
+<dependentAssembly>
+  <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" />
+  <bindingRedirect oldVersion="0.0.0.0-13.0.0.0" newVersion="13.0.0.0" />
+</dependentAssembly>
+<!-- «ով որ խնդրում է մինչև 13.0.0.0 — կստանա 13.0.0.0» -->`,
+        deep: `<p><b>Ավելի խորը։</b> <code>bindingRedirect</code>-ը բուժում է միայն <i>համարների
+անհամընկնումը</i>, ոչ թե API-ի անհամատեղելիությունը։ Եթե A library-ն կանչում է մի մեթոդ, որը
+13.0 version-ում ջնջել են, redirect-ը ազնվորեն կմատուցի 13.0-ն — և ծրագիրը կընկնի արդեն
+աշխատանքի ընթացքում, <code>MissingMethodException</code>-ով։ Դրա համար ժամանակակից մոտեցումը
+ուրիշ է՝ բախումը լուծում են <b>մինչև գործարկումը</b>, restore-ի փուլում՝ բոլորի համար ընտրելով
+մեկ version։ Compile-ը ասում է «ինձ հավաքել են 1.2-ի դեմ», restore-ը ասում է «կգնա 2.0», իսկ
+runtime-ը պարզապես բեռնում է այն, ինչ դրել են կողքին։</p>`,
+        links: [
+          { label: "MS Learn — Global Assembly Cache", url: "https://learn.microsoft.com/en-us/dotnet/framework/app-domains/gac" },
+          { label: "MS Learn — .NET application publishing", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/" }
+        ],
+        task: {
+          q: "Ինչու՞ ժամանակակից .NET-ում լռելյայն չեն օգտագործում assembly-ների ընդհանուր համակարգային պահոց՝ GAC-ի նման?",
+          options: [
+            "GAC-ը աշխատում է միայն Linux-ի վրա, իսկ .NET-ը կրոսպլատֆորմ է",
+            "Ծրագրի կողքի private պատճենները ամեն ծրագրի տալիս են իր version-ը, դրա համար մեկի թարմացումը մնացածները չի կոտրում",
+            "GAC-ը պահանջում է NuGet, իսկ NuGet-ը հայտնվեց ավելի ուշ",
+            "Ընդհանուր պահոցից assembly-ները ավելի դանդաղ են բեռնվում, դրա համար հրաժարվեցին դրանից"
+          ],
+          answer: 1,
+          explain: "Մեկուսացումը ավելի կարևոր է, քան տեղի խնայողությունը։ Ծրագրի թղթապանակում իր պատճենը նշանակում է, որ version-ները ծրագրերի միջև չեն բախվում — սա էլ հենց «DLL Hell»-ից դուրս գալու ճանապարհն է։"
+        }
+      },
+      {
+        id: "asm-5",
+        title: "Class library-ներ և TFM",
+        subtitle: ".NET Standard-ը վարդակի specification-ն է",
+        theory: `
+<p><b>Class library</b>-ն մուտքի կետ չունեցող project է, որը compile է լինում DLL-ի մեջ,
+որպեսզի կոդը հնարավոր լինի կրկին օգտագործել։ Domain մոդելները, contract-ները, helper-ները —
+այս ամենը սովորաբար ապրում է library-ներում, իսկ ծրագիրը (API, worker) դրանք միացնում է։</p>
+<p><b>TFM</b> (Target Framework Moniker) — project-ում <code>net8.0</code> տիպի տողիկ է։ Այն
+պատասխանում է երկու հարցի՝ ինչ API-ներ են հասանելի compile-ի ժամանակ և ով կկարողանա օգտագործել
+արդյունքը։</p>
+<p>Հետո ամենաշփոթեցնող տեղը։ <b>.NET Standard</b>-ը <i>specification</i> է, API-ների ցուցակ, ոչ
+թե պլատֆորմ՝ ծրագրերը դրա վրա չեն գործարկվում։ Սա նման է վարդակի ստանդարտին — այն նկարագրում է
+ձևը, բայց ինքը հոսանք չի տալիս։ <b>Ժամանակակից .NET</b>-ը (<code>net8.0</code>) հակառակը՝
+իրական պլատֆորմ է՝ runtime, SDK, library-ներ; սա պատի մեջ եղած կոնկրետ վարդակն է, որն աշխատում է։</p>
+<p>Պրակտիկան պարզ է՝ եթե library-ն պետք է միացնեն .NET Framework-ի հին ծրագրերը, վերցնում ես
+<code>netstandard2.0</code>։ Եթե բոլոր սպառողները ժամանակակից .NET-ի վրա են՝ միանգամից
+<code>net8.0</code>։ Պետք է և՛ մեկը, և՛ մյուսը՝ multi-targeting։ Եվ TFM-ը ընտրիր ըստ
+սպառողների, ոչ թե ըստ սովորության՝ <code>net48</code>-ծրագիրը կմիացնի
+<code>netstandard2.0</code>-library-ն, բայց չի միացնի միայն <code>net8.0</code>-ի տակ հավաքված
+library-ն։</p>`,
+        code: `# նոր class library -> Acme.Shop.Domain.dll
+dotnet new classlib -n Acme.Shop.Domain
+
+# միացնում ենք այն ծրագրից (project reference, առանց NuGet-ի)
+dotnet add Acme.Shop.Api reference Acme.Shop.Domain
+
+<!-- տարբերակ 1: միայն ժամանակակից .NET -->
+<TargetFramework>net8.0</TargetFramework>
+
+<!-- տարբերակ 2: պետք է նաև հին .NET Framework -->
+<TargetFramework>netstandard2.0</TargetFramework>
+
+<!-- տարբերակ 3: միանգամից երկու target, երկու DLL փաթեթում -->
+<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+
+// multi-targeting-ի ժամանակ կոդը կարելի է ճյուղավորել ըստ target-ի
+public static string Describe()
+{
+#if NET8_0_OR_GREATER
+    return "հասանելի են ժամանակակից API-ներ";
+#else
+    return "լայն համատեղելիության ռեժիմ";
+#endif
+}
+
+// solution-ի ներսում՝ project reference; repository-ների միջև՝ NuGet-փաթեթ`,
+        deep: `<p><b>Ավելի խորը։</b> <code>netstandard2.1</code>-ը երևում է որպես «պարզապես մի
+քիչ ավելի մեծ version», բայց նրա մեջ որոգայթ կա՝ .NET Framework-ը դա <b>ընդհանրապես չի
+աջակցում</b>։ Այսինքն <code>2.0</code>-ից <code>2.1</code> անցումը մի քիչ API չի ավելացնում —
+այն դուրս է շպրտում ամբողջ Framework-լսարանը, որի համար էլ Standard-ը վերցնում էին։ Դրա համար
+իրականում կենդանի տարբերակները երկուսն են՝ <code>netstandard2.0</code> (առավելագույն
+համատեղելիություն) կամ ժամանակակից <code>net8.0</code>։ Միջանկյալ <code>2.1</code>-ը գրեթե միշտ
+երկու աշխարհների վատագույնն է։</p>`,
+        links: [
+          { label: "MS Learn — .NET Standard", url: "https://learn.microsoft.com/en-us/dotnet/standard/net-standard" },
+          { label: "MS Learn — Target frameworks (TFM)", url: "https://learn.microsoft.com/en-us/dotnet/standard/frameworks" }
+        ],
+        task: {
+          q: "Քո library-ն պետք է միացնեն նաև .NET Framework 4.8-ի հին ծրագրերը։ Ո՞ր TargetFramework-ը ընտրել?",
+          options: [
+            "net8.0 — ամենանորն է, ուրեմն համատեղելի է ամեն ինչի հետ",
+            "netstandard2.1 — ավելի նոր է, քան 2.0-ն, և աջակցում է Framework-ին",
+            "netstandard2.0",
+            "net48 — այլ տարբերակ չկա"
+          ],
+          answer: 2,
+          explain: "netstandard2.0-ն Standard-ի միակ version-ն է, որը հասկանում է .NET Framework 4.6.1+-ը; ժամանակակից .NET-ը նույնպես միացնում է այդպիսի library-ներ։ netstandard2.1-ը Framework-ը ընդհանրապես չի աջակցում։"
+        }
+      },
+      {
+        id: "asm-6",
+        title: "NuGet՝ PackageReference և restore",
+        subtitle: "Պատրաստի դետալների խանութ՝ գնումների ցուցակով",
+        theory: `
+<p>Դու պտուտակները ինքդ չես ձուլում — գնում ես պատրաստի։ <b>NuGet</b>-ը .NET-ի դետալների
+խանութն է, իսկ <code>.nupkg</code> փաթեթը՝ տուփ՝ ներսում հավաքված DLL-ներ մեկ կամ մի քանի TFM-ի
+տակ, գումարած metadata (id, version, կախվածություններ, լիցենզիա)։</p>
+<p>Դու այդ DLL-ները repository-ում չես պահում։ Project-ում ընկած է միայն <i>գնումների
+ցուցակը</i> — &lt;PackageReference /&gt; id-ով և version-ով։ <code>dotnet restore</code>
+հրամանը կարդում է ցուցակը, կառուցում կախվածությունների գրաֆը, պակասողը ներբեռնում ընդհանուր
+cache-ի մեջ (<code>~/.nuget/packages</code>) և լուծված արդյունքը գրում
+<code>obj/project.assets.json</code>-ում։</p>
+<p>Հետո սկսվում է հետաքրքիրը՝ <b>տրանզիտիվ</b> կախվածությունները։ Դու միացրիր մեկ փաթեթ, իսկ նա
+բերեց իր երեքը։ Եթե երկու փաթեթ ուզում են նույն library-ի տարբեր version-ներ, NuGet-ը փորձում է
+ընտրել <i>մեկը</i>, որը կբավարարի բոլորին։ Չի ստացվում — restore-ը բողոքում է։</p>
+<p>Բուժումը հերթով՝ նայել գրաֆը <code>dotnet list package --include-transitive</code> հրամանով;
+թարմացնել փաթեթները մինչև համատեղելի version-ներ; անհրաժեշտության դեպքում ամրացնել version-ը
+բացահայտ հղումով; մեծ repository-ում բոլոր version-ները հանել մեկ
+<code>Directory.Packages.props</code> ֆայլի մեջ։ Եվ երբեք ձեռքով DLL չպատճենել
+<code>bin</code>-ի մեջ։</p>`,
+        code: `dotnet add package Serilog --version 4.0.0
+# info : PackageReference for package 'Serilog' version '4.0.0' added to project.
+
+<!-- csproj-ում հայտնվեց գնումների ցուցակի տողը -->
+<ItemGroup>
+  <PackageReference Include="Serilog" Version="4.0.0" />
+</ItemGroup>
+
+dotnet restore
+# քաշում է փաթեթները ընդհանուր cache ~/.nuget/packages
+# և լուծված գրաֆը գրում obj/project.assets.json-ում
+
+dotnet list package --include-transitive
+#   Serilog             4.0.0        <- ինքս եմ խնդրել
+#   > Acme.Shared       2.0.0        <- եկել է տրանզիտիվ, ես չեմ խնդրել
+
+# Բախում: A փաթեթին պետք է Acme.Shared >= 1.0, B փաթեթին՝ >= 2.0
+# NuGet-ը փնտրում է մեկ version բոլորի համար։ Չի գտնում — restore-ը ընկնում է
+
+<!-- լուծում: ամրացնել version-ը բացահայտ հղումով -->
+<PackageReference Include="Acme.Shared" Version="2.1.0" />
+
+dotnet list package --outdated   # ինչն է արդեն հնացել`,
+        deep: `<p><b>Ավելի խորը։</b> NuGet-ի գրաֆում հաղթում է ոչ թե ամենանոր version-ը, այլ
+<b>ամենացածրը, որը բավարարում է բոլոր սահմանափակումները</b>։ Սա արված է հատուկ՝ այդպես
+restore-ի արդյունքը կանխատեսելի է և ինքն իրեն չի փոխվում նրանից, որ ինչ-որ մեկը nuget.org-ում
+նոր release դրեց։ Այստեղից էլ հետևանքը՝ եթե ուզում ես կոնկրետ version, պետք է այն խնդրես
+<i>ուղիղ</i> &lt;PackageReference /&gt;-ով՝ ուղիղ հղումը միշտ ավելի ուժեղ է, քան ցանկացած
+տրանզիտիվ ցանկություն։</p>`,
+        links: [
+          { label: "NuGet — PackageReference in project files", url: "https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files" },
+          { label: "NuGet — Dependency resolution", url: "https://learn.microsoft.com/en-us/nuget/concepts/dependency-resolution" }
+        ],
+        task: {
+          kind: "write",
+          q: "Գրիր CLI հրամանը, որը project-ում կավելացնի Serilog փաթեթը հենց 4.0.0 version-ով։",
+          placeholder: "dotnet ...",
+          must: ["dotnetaddpackage", "serilog", "4.0.0"],
+          solution: "dotnet add package Serilog --version 4.0.0",
+          explain: "dotnet add package-ը csproj-ում ավելացնում է PackageReference և միանգամից անում restore։ Առանց --version-ի կվերցվի վերջին կայուն version-ը։"
+        }
+      },
+      {
+        id: "asm-7",
+        title: "Կարգավորումներ՝ appsettings vs NuGet.config",
+        subtitle: "Ինչ է կարդում ծրագիրը և ինչ՝ build-ը",
+        theory: `
+<p>Բնակարանում երկու տարբեր «կարգավորիչ» կա՝ ջերմակարգավորիչը, որով ամեն օր ջերմաստիճանն ես
+պտտում, և ավտոմատներով վահանակը, որը որոշում է, թե ընդհանրապես ինչպես է լույսը միացած։ Դրանք
+շփոթում են, բայց սրանք տարբեր շերտեր են։ .NET-ում նույնն է՝ <i>ծրագրի</i> կարգավորումներ և
+<i>project-ի</i> կարգավորումներ։</p>
+<p><b>appsettings.json</b>-ը ջերմակարգավորիչն է։ Այն կարդում է քո կոդը աշխատանքի ընթացքում՝
+connection string-եր, timeout-ներ, feature flag-եր։ Արժեքները շարվում են շերտերով, և ամեն հաջորդ
+շերտը ծածկում է նախորդը՝ <code>appsettings.json</code> →
+<code>appsettings.Development.json</code> → user secrets → environment variable-ներ → command
+line-ի արգումենտներ։ Environment variable-ում ներդրված key-ը գրվում է կրկնակի ընդգծումով՝
+<code>Shipping__DefaultCarrier</code>։</p>
+<p><b>NuGet.config</b>-ը և <code>.csproj</code>-ը վահանակն են։ Դրանք կարդում է ոչ թե ծրագիրը,
+այլ <code>restore</code>-ը և build-ը՝ որտեղից քաշել փաթեթները և որ version-ները վերցնել։</p>
+<p>Այստեղից էլ ծնվում է դասական «իմ մոտ աշխատում է, CI-ում ընկնում է»-ը։ NuGet-ը սոսնձում է
+կոնֆիգները մի քանի մակարդակից՝ մեքենա → օգտատեր → repository։ Ծրագրավորողը ավելացրեց private
+feed իր user-կոնֆիգում — իր մոտ restore-ը կանաչ է, գործընկերոջ մոտ և CI-ում՝ «package not
+found»։ Բուժվում է repository-ի արմատում դրված <code>NuGet.config</code> ֆայլով՝
+<code>&lt;clear /&gt;</code>-ով և աղբյուրների բացահայտ ցուցակով՝ այդ դեպքում բոլոր clone-ները և
+CI-ն փաթեթները վերցնում են նույն տեղից։</p>`,
+        code: `// appsettings.json — ծրագրի կարգավորումները (դրանք կարդում է քո կոդը)
+{
+  "ConnectionStrings": {
+    "ShopDb": "Server=localhost;Database=Shop"
+  },
+  "Shipping": {
+    "DefaultCarrier": "DHL",
+    "TimeoutSeconds": 30
+  }
+}
+
+// Շերտերը, որտեղ ամեն հաջորդը ծածկում է նախորդը:
+//   appsettings.json -> appsettings.{Environment}.json -> user secrets
+//   -> environment variable-ներ -> command line-ի արգումենտներ
+// Ներդրված key environment variable-ում: Shipping__DefaultCarrier=UPS
+
+<!-- NuGet.config repository-ի արմատում — build-ի կարգավորումները (կարդում է restore-ը) -->
+<configuration>
+  <packageSources>
+    <clear />   <!-- մոռանալ կոնկրետ մեքենայի վրա կարգավորված feed-երը -->
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="acme-private" value="https://pkgs.example.com/acme/index.json" />
+  </packageSources>
+</configuration>
+<!-- Գաղտնաբառերն ու token-ները այստեղ չեն պահում՝ դրանք տալիս են CI-գաղտնիքներով
+     կամ credential provider-ով -->`,
+        deep: `<p><b>Ավելի խորը։</b> <code>NuGet.config</code>-ը պատասխանում է միայն «որտեղից
+քաշել» հարցին, իսկ <i>որ version</i>-ը վերցնել՝ որոշում են <code>PackageReference</code>-ը և
+version-ների կենտրոնացված կառավարումը։ Ամբողջովին վերարտադրելի restore ստացվում է միայն այն
+ժամանակ, երբ ամրացված է և՛ մեկը, և՛ մյուսը։ Եվ ամենատհաճ սցենարը հենց այստեղ է՝ եթե նույն id-ն
+ու version-ը ընկած են երկու feed-ի վրա տարբեր պարունակությամբ, կհաղթի նա, ով առաջինը
+կպատասխանի — իսկ նա տարբեր մեքենաների վրա տարբեր է։ Փրկում է
+<code>packageSourceMapping</code>-ը՝ «ամեն ինչ, որ սկսվում է <code>Acme.</code>-ով, վերցնել
+միայն private feed-ից» կանոնը ընտրությունը դարձնում է միանշանակ։</p>`,
+        links: [
+          { label: "NuGet — nuget.config reference", url: "https://learn.microsoft.com/en-us/nuget/reference/nuget-config-file" },
+          { label: "MS Learn — Configuration in .NET", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration" }
+        ],
+        task: {
+          q: "Լոկալ dotnet restore-ը անցնում է, իսկ CI-ում ընկնում է «package not found»-ով՝ ներքին Acme.Shared փաթեթի վրա։ Ի՞նչն է ամենահավանականը?",
+          options: [
+            "CI-ում restore-ի համար օպերատիվ հիշողություն չի հերիքում",
+            "Private feed-ը գրված է միայն ծրագրավորողի user-level կոնֆիգում, ոչ թե repository-ի NuGet.config-ում",
+            "appsettings.json-ում բազայի connection string-ը սխալ է",
+            "PackageReference-ում version-ը գրված է բառերով, ոչ թե թվերով"
+          ],
+          answer: 1,
+          explain: "NuGet-ը սոսնձում է մեքենայի, օգտատիրոջ և repository-ի կոնֆիգները։ Միայն իր մոտ ավելացրած աղբյուրը CI-ում գոյություն չունի։ Feed-երը հայտարարում են repository-ի արմատի NuGet.config-ում՝ ցուցակից առաջ &lt;clear /&gt;-ով։"
+        }
+      }
+    ]
+  },
+
+  /* ================= WORLD 11: REFLECTION ================= */
+  {
+    id: "reflection",
+    name: "Reflection",
+    icon: "◉",
+    blurb: "Ծրագիրը կարդում է իր իսկ metadata-ն՝ գտնում է type-երը, ստեղծում object-եր և կանչում մեթոդներ ըստ անվան։",
+    levels: [
+      {
+        id: "refl-1",
+        title: "Ի՞նչ է reflection-ը",
+        subtitle: "Ամեն դետալի վրա փորագրված է տախտակ",
+        theory: `
+<p>Պատկերացրու անծանոթ գործիքներով արկղ։ Ամեն մեկի վրա փորագրված է տախտակ՝ ինչպես է կոչվում,
+ինչի համար է, ինչ ծայրակալներ են սազում։ Դու կարող ես վերցնել գործիք, որը երբեք չես տեսել, կարդալ
+տախտակը և անմիջապես օգտագործել այն։</p>
+<p>Compiler-ը assembly-ի (DLL կամ EXE) մեջ դնում է ոչ միայն կոդը, այլև այդպիսի տախտակներ՝
+<b>metadata</b>՝ բոլոր type-երը, նրանց մեթոդները, հատկությունները, պարամետրերը, attribute-ները։
+<b>Reflection</b>-ը այն API-ն է, որը կարդում է այդ տախտակները <i>աշխատանքի ընթացքում</i> և
+կարողանում է կանչել այն, ինչ գտել է։</p>
+<p>Տարբերությունը պարզ է։ Սովորական կոդն անունները գիտի նախապես՝ դու գրում ես
+<code>user.Name</code>, և compiler-ը դա ստուգում է։ Reflection-ը անունները իմանում է runtime-ում՝
+string-ից, config-ից, ուրիշի DLL-ից։ Դու աշխատում ես ոչ թե <code>User</code>-ի, այլ
+<code>Type</code> object-ի հետ, որը <i>նկարագրում է</i> <code>User</code>-ը։</p>`,
+        code: `// Սովորական կոդ՝ անունները հայտնի են compile time-ում
+var user = new User();
+user.Name = "Anna";
+Console.WriteLine(user.Name);
+
+// Նույնը reflection-ով՝ անունները գտնում ենք runtime-ում
+using System.Reflection;
+
+Type type = typeof(User);
+object instance = Activator.CreateInstance(type)!;
+
+PropertyInfo? nameProp = type.GetProperty("Name");
+nameProp!.SetValue(instance, "Anna");
+Console.WriteLine(nameProp.GetValue(instance));   // Anna
+
+// Metadata-ն ընկած է հենց assembly-ի մեջ՝ այն կարելի է պարզապես թերթել
+Assembly asm = type.Assembly;
+Console.WriteLine(asm.FullName);`,
+        deep: `<p><b>Ավելի խորը։</b> reflection-ը ոչինչ չի «decompile» անում և չի գուշակում։ Այն
+կարդում է հենց նույն metadata-ի աղյուսակները, որոնցով աշխատում է ինքը՝ runtime-ը՝ CLR-ը դրանցով է
+անում JIT, ստուգում type-երը և գտնում մեթոդները։ Այսինքն՝ դու մուտք ես ստանում .NET-ի ներքին
+տեղեկատուին։ Այստեղից էլ գինը՝ <code>typeof(User)</code>-ը գրեթե հաստատուն է, իսկ
+<code>Type.GetType(&quot;User&quot;)</code>-ը՝ իսկական որոնում ըստ string-ի։ Եվ այստեղից էլ
+գլխավոր վտանգը՝ trimming-ը և Native AOT-ն կտրում են այն, ինչ «ոչ ոք չի կանչում», իսկ string-ով
+կանչը նրանք չեն տեսնում։</p>`,
+        links: [
+          { label: "MS Docs — Reflection and attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/" },
+          { label: "MS Docs — Reflection in .NET", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection" }
+        ],
+        task: {
+          q: "Ինչո՞վ է reflection-ը տարբերվում մեթոդի սովորական կանչից?",
+          options: [
+            "Reflection-ն ավելի արագ է, որովհետև շրջանցում է compiler-ը",
+            "Reflection-ը type-երն ու անդամները գտնում է աշխատանքի ընթացքում՝ ըստ metadata-ի, ոչ թե ըստ կոդի մեջ գրված անունների",
+            "Reflection-ը պետք է միայն տվյալների բազաների հետ աշխատելու համար",
+            "Reflection-ն անջատում է type-երի ստուգումը ամբողջ ծրագրում"
+          ],
+          answer: 1,
+          explain: "Reflection-ը runtime-ում կարդում է assembly-ի metadata-ն։ Դրա համար էլ անունը կարող է գալ string-ով՝ config-ից, բայց այդպիսի string-ը compiler-ն արդեն չի ստուգի։"
+        }
+      },
+      {
+        id: "refl-2",
+        title: "Type-ը և assembly-ն",
+        subtitle: "Type-ը type-ի անձնագիրն է",
+        theory: `
+<p><code>Type</code>-ը անձնագիր է։ Դրա մեջ գրված է ամեն ինչ type-ի մասին՝ անունը, class է թե
+struct, ով է նրա ծնողը, ինչ interface-ներ է իրականացնում։ Ինքը՝ object-ը, մարդն է, իսկ
+<code>Type</code>-ը՝ նրա մասին փաստաթուղթը։</p>
+<p>Անձնագիրը կարելի է ստանալ երեք ձևով՝</p>
+<ul>
+<li><code>typeof(User)</code> — type-ը հայտնի է compile time-ում։ Ամենաարագ և ամենաանվտանգ ճանապարհն է։</li>
+<li><code>obj.GetType()</code> — հարցնել գոյություն ունեցող object-ին, թե ով է նա իրականում։</li>
+<li><code>Type.GetType(&quot;անուն&quot;)</code> — անունը եկել է string-ով runtime-ում։ Հեշտ է
+սխալվել՝ կվերադարձնի <code>null</code>, ոչ թե exception։</li>
+</ul>
+<p><b>Assembly</b>-ն ինքը՝ տուփն է, այսինքն՝ բեռնված DLL-ը կամ EXE-ն։ Նա ունի
+<code>GetTypes()</code>՝ ներսի բոլոր type-երի ցուցակը։ Սրանով է սկսվում ցանկացած սկաներ՝
+plugin-ներ, DI-container-ներ, թեստեր։</p>`,
+        code: `using System.Reflection;
+
+// 1) Type-ը հայտնի է compile time-ում
+Type t1 = typeof(string);
+Type t2 = typeof(List<>);        // բաց generic՝ T-ն դեռ նշված չէ
+Type t3 = typeof(List<int>);     // փակ generic
+
+// 2) Type-ը վերցնում ենք գոյություն ունեցող object-ից
+object value = "hello";
+Type t4 = value.GetType();       // System.String
+
+// 3) Type-ը string-ից՝ անունը գալիս է runtime-ում
+Type? t5 = Type.GetType("System.Int32");
+Type? t6 = Type.GetType("Acme.Shop.Order, Acme.Shop");  // նաև assembly-ի անունը
+
+// Ամբողջ assembly-ի զննում
+Assembly asm = typeof(Program).Assembly;
+Console.WriteLine(asm.FullName);
+
+foreach (Type type in asm.GetTypes())
+{
+    if (!type.IsClass || type.IsAbstract) continue;
+    Console.WriteLine(type.FullName + "  base=" + type.BaseType?.Name);
+}`,
+        deep: `<p><b>Ավելի խորը։</b> <code>Type.GetType(&quot;Acme.Shop.Order&quot;)</code>-ը type-ը
+փնտրում է ընդամենը երկու տեղում՝ այն assembly-ի մեջ, որտեղից կանչում ես, և համակարգային
+գրադարանում։ Ուրիշի DLL-ը ինքն իրեն չի բեռնի՝ դրա համար պետք է <i>assembly-qualified</i> անուն՝
+<code>&quot;Acme.Shop.Order, Acme.Shop&quot;</code> տեսքով։ Երկրորդ որոգայթը՝
+<code>typeof(List&lt;&gt;)</code>-ը տալիս է «բաց» type, նրա մոտ
+<code>IsGenericTypeDefinition == true</code> է, և դրանից object ստեղծել չի կարելի։ Սկզբում փակիր
+այն՝ <code>MakeGenericType(typeof(int))</code>։</p>`,
+        links: [
+          { label: "MS Docs — Type", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type" },
+          { label: "MS Docs — Type.GetType", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.gettype" }
+        ],
+        task: {
+          q: "Type-ի անունը գալիս է config-ից՝ «Acme.Shop.Order»։ Type.GetType-ը վերադարձրեց null, թեև class-ը հաստատ գոյություն ունի։ Ո՞րն է ամենահավանական պատճառը?",
+          options: [
+            "Type.GetType-ն աշխատում է միայն value type-երի հետ",
+            "Անունը assembly-qualified չէ, իսկ պետք եղած assembly-ն GetType-ը ինքը չի փնտրում",
+            "Պետք էր գրել typeof, ոչ թե Type.GetType",
+            "Հրապարակային class-երի համար GetType-ը միշտ null է վերադարձնում"
+          ],
+          answer: 1,
+          explain: "GetType-ը նայում է կանչող assembly-ի և համակարգային գրադարանի մեջ։ Ուրիշի DLL-ի համար պետք է «Acme.Shop.Order, Acme.Shop» տեսքի անուն՝ այլապես կստանաս լուռ null։"
+        }
+      },
+      {
+        id: "refl-3",
+        title: "Type-ի անդամները՝ հատկություններ և մեթոդներ",
+        subtitle: "Անծանոթ հեռակառավարիչի կոճակների ցուցակը",
+        theory: `
+<p>Դու գտար առանց մակագրության հեռակառավարիչ։ Reflection-ը տալիս է նրա բոլոր կոճակների ցուցակը՝
+ինչպես է կոչվում ամեն մեկը, ինչ է ընդունում, կարելի՞ է սեղմել այն։ Եվ թույլ է տալիս սեղմել։</p>
+<p>Կոճակները նկարագրվում են «info»-class-երով՝ <code>PropertyInfo</code> (հատկություն,
+<code>GetValue</code> / <code>SetValue</code>), <code>MethodInfo</code> (մեթոդ,
+<code>Invoke</code>), <code>FieldInfo</code> (դաշտ), <code>ConstructorInfo</code> (constructor)։
+Բոլորի ընդհանուր ծնողը <code>MemberInfo</code>-ն է։</p>
+<p>Կարևոր մանրուք՝ <code>GetMethod</code>-ը և <code>GetProperty</code>-ն լռելյայն տեսնում են
+միայն <b>public</b> և <b>ոչ ստատիկ</b> անդամները։ Private մեթոդը կվերադարձնի <code>null</code>,
+քանի դեռ բացահայտ չես խնդրել <code>BindingFlags.Instance | BindingFlags.NonPublic</code>-ով։ Այո,
+reflection-ը կարողանում է կանչել private-ը՝ սա փրկում է framework-ներին և թեստերին, բայց կոտրում է
+encapsulation-ը։</p>`,
+        code: `using System.Reflection;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; private set; }
+    public void ApplyDiscount(decimal percent) => Price *= 1 - percent;
+    private void Touch() { }
+}
+
+Type type = typeof(Product);
+object product = Activator.CreateInstance(type)!;
+
+// Հատկություն՝ կարդում ենք և գրում
+PropertyInfo name = type.GetProperty("Name")!;
+name.SetValue(product, "Tea");
+Console.WriteLine(name.GetValue(product));       // Tea
+
+// Մեթոդ՝ կանչում ենք, արգումենտները փոխանցում object-ի զանգվածով
+MethodInfo apply = type.GetMethod("ApplyDiscount")!;
+apply.Invoke(product, new object[] { 0.10m });   // մինուս 10%
+
+// Private-ը՝ միայն եթե խնդրես BindingFlags-ով
+MethodInfo? touch = type.GetMethod("Touch",
+    BindingFlags.Instance | BindingFlags.NonPublic);
+touch?.Invoke(product, null);`,
+        deep: `<p><b>Ավելի խորը։</b> <code>Invoke</code>-ի ստորագրությունն է
+<code>object Invoke(object, object[])</code>՝ նշանակում է ամեն <code>int</code> և
+<code>decimal</code> ճանապարհին փաթեթավորվում է <code>object</code>-ի մեջ (<i>boxing</i>), իսկ
+արդյունքը ստիպված ես հետ ձևափոխել։ Եվ ևս մեկը՝ եթե մեթոդը ներսում exception նետի, դու կբռնես ոչ թե
+այն, այլ <code>TargetInvocationException</code>-ը՝ իսկական պատճառը թաքնված է
+<code>InnerException</code>-ի մեջ։ Debugger-ներն ու log-երը սրա վրա պարբերաբար շփոթեցնում են
+մարդկանց։</p>`,
+        links: [
+          { label: "MS Docs — PropertyInfo", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.propertyinfo" },
+          { label: "MS Docs — BindingFlags", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.bindingflags" }
+        ],
+        task: {
+          kind: "write",
+          q: "Կա Type type և product object։ Reflection-ով կարդա «Name» հրապարակային հատկության արժեքը՝ սկզբում ստացիր PropertyInfo, հետո վերցրու արժեքը։",
+          placeholder: "երկու տող C#...",
+          must: ["getproperty", "getvalue"],
+          solution: "var prop = type.GetProperty(nameof(Product.Name));\nobject? value = prop.GetValue(product);",
+          explain: "GetProperty-ն ըստ անվան գտնում է հատկության նկարագրությունը, GetValue-ն կարդում է արժեքը կոնկրետ instance-ի մոտ։ nameof-ն ավելի լավն է, քան string-ը՝ վերանվանելիս կկոտրվի compilation-ը, ոչ թե runtime-ը։"
+        }
+      },
+      {
+        id: "refl-4",
+        title: "Object-երի ստեղծում՝ Activator",
+        subtitle: "3D-տպիչ՝ տալիս ես գծագիրը, ստանում ես իրը",
+        theory: `
+<p><code>Activator.CreateInstance(type)</code>-ը 3D-տպիչ է։ Դու <code>new</code> չես գրում, դու
+տալիս ես գծագիրը (<code>Type</code> object-ը) և ստանում պատրաստի իրը։ Գծագիրը կարող էր գալ
+config-ից կամ ուրիշի DLL-ից՝ տպիչին միևնույն է։</p>
+<p>Տարբերակները՝ առանց արգումենտների, constructor-ի արգումենտներով, կամ ուղղակիորեն
+<code>ConstructorInfo.Invoke</code>-ով։ Generic-ների համար սկզբում փակում ես type-ը
+<code>MakeGenericType</code>-ով, այլապես ստեղծելու բան չկա։</p>
+<p>Ահա թե ինչի համար է սա պետք գործնականում։ Միացրու «ստեղծել object» և «անցնել հատկությունների
+վրայով»՝ և կստացվի <b>mapper</b>՝ համանուն հատկությունների պատճենում մի object-ից մյուսը։ Հենց
+այդպես, միայն շատ ավելի օպտիմալացված, աշխատում են serializer-ները, ORM-ը և AutoMapper-ը։</p>`,
+        code: `using System.Reflection;
+
+// Դատարկ constructor
+object? a = Activator.CreateInstance(typeof(Product));
+
+// Constructor արգումենտներով
+object? b = Activator.CreateInstance(typeof(List<int>), new object[] { 16 });
+
+// Բաց generic-ը սկզբում պետք է «փակել»
+Type closed = typeof(List<>).MakeGenericType(typeof(string));
+object list = Activator.CreateInstance(closed)!;      // List<string>
+
+// Պրակտիկա՝ պատճենում ենք համանուն հատկությունները source -> target
+static void CopyProperties(object source, object target)
+{
+    Type srcType = source.GetType();
+    Type dstType = target.GetType();
+
+    foreach (PropertyInfo src in srcType.GetProperties())
+    {
+        if (!src.CanRead) continue;
+
+        PropertyInfo? dst = dstType.GetProperty(src.Name);
+        if (dst is null || !dst.CanWrite) continue;
+
+        // type-երը պետք է համատեղելի լինեն, այլապես SetValue-ն կընկնի
+        if (!dst.PropertyType.IsAssignableFrom(src.PropertyType)) continue;
+
+        dst.SetValue(target, src.GetValue(source));
+    }
+}`,
+        deep: `<p><b>Ավելի խորը։</b> <code>Activator.CreateInstance</code>-ը ամեն կանչի ժամանակ
+նորից փնտրում է constructor-ը և ստուգում արգումենտները։ Տաք կոդի համար սա շտկում են այսպես՝ մեկ
+անգամ գտնում են <code>ConstructorInfo</code>-ն և դրանից <b>compile են անում</b> delegate՝
+<code>Expression.Lambda&lt;Func&lt;object&gt;&gt;(Expression.New(ctor)).Compile()</code>։ Հետո
+object-ի ստեղծումն արժե գրեթե սովորական <code>new</code>-ի չափ։ Reflection-ն այստեղ աշխատում է մեկ
+անգամ՝ սկզբում, իսկ runtime-ում նրան այլևս չկա։ Գումարած մի մանրուք՝ struct-երի մոտ դատարկ
+constructor փնտրելու կարիք չկա՝ <code>CreateInstance</code>-ը պարզապես կվերադարձնի լռելյայն
+արժեքը։</p>`,
+        links: [
+          { label: "MS Docs — Activator.CreateInstance", url: "https://learn.microsoft.com/en-us/dotnet/api/system.activator.createinstance" },
+          { label: "MS Docs — Reflection and generic types", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection-and-generic-types" }
+        ],
+        task: {
+          kind: "write",
+          q: "Type t փոփոխականի մեջ ընկած է դատարկ constructor ունեցող type։ Ստեղծիր նրա instance-ը աշխատանքի ընթացքում՝ մեկ տող։",
+          placeholder: "մեկ տող C#...",
+          must: ["activator.createinstance"],
+          solution: "object? obj = Activator.CreateInstance(t);",
+          explain: "Activator.CreateInstance(t)-ն գտնում է առանց պարամետրերի constructor-ը և կանչում այն։ Արդյունքը object է, դրա համար հետո այն ձևափոխում են interface-ի կամ base type-ի։"
+        }
+      },
+      {
+        id: "refl-5",
+        title: "Attribute-ներ և reflection",
+        subtitle: "Տեղափոխվելիս արկղերի վրա փակցված պիտակներ",
+        theory: `
+<p>Տեղափոխվելիս դու արկղերի վրա փակցնում ես ստիկերներ՝ «փխրուն», «խոհանոց»։ Իրենք՝ ստիկերները,
+ոչինչ չեն անում։ Նրանք աշխատում են միայն այն պատճառով, որ բեռնակիրը դրանք <i>կարդում է</i>։</p>
+<p><b>Attribute</b>-ը նույն ստիկերն է, միայն թե class-ի կամ մեթոդի վրա։ Այն ընկնում է metadata-ի
+մեջ և լուռ պառկում այնտեղ։ Reflection-ը բեռնակիրն է՝ <code>GetCustomAttribute&lt;T&gt;()</code>-ը
+հանում է ստիկերը և դրանով որոշում կայացնում։</p>
+<p>Այս ամբողջ մոգությունը կառուցված է մեկ զույգի վրա՝ նշեցիր սկզբնական կոդում, կարդացիր
+runtime-ում։ Այդպես են աշխատում ASP.NET-ի route-երը (<code>[HttpGet]</code>), validation-ը
+(<code>[Required]</code>), serialization-ը (<code>[JsonPropertyName]</code>) և քո ցանկացած սեփական
+նշանը։ Attribute-ը նկարագրվում է սովորական class-ով, որը ժառանգում է
+<code>Attribute</code>-ից։</p>`,
+        code: `using System.Reflection;
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class RouteAttribute : Attribute
+{
+    public string Template { get; }
+    public RouteAttribute(string template) => Template = template;
+}
+
+[Route("api/products")]
+public class ProductsController
+{
+    [Route("")]
+    public void List() { }
+
+    [Route("{id}")]
+    public void GetById(int id) { }
+}
+
+// Կարդում ենք ստիկերները runtime-ում
+Type type = typeof(ProductsController);
+RouteAttribute? onType = type.GetCustomAttribute<RouteAttribute>();
+Console.WriteLine(onType?.Template);          // api/products
+
+foreach (MethodInfo m in type.GetMethods(BindingFlags.Public
+        | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+{
+    RouteAttribute? route = m.GetCustomAttribute<RouteAttribute>();
+    if (route is null) continue;
+    Console.WriteLine(m.Name + " -> " + route.Template);
+}`,
+        deep: `<p><b>Ավելի խորը։</b> attribute-ի instance-ը հիշողության մեջ գոյություն չունի, քանի
+դեռ դու այն չես խնդրել։ Metadata-ի մեջ ընկած են միայն <i>արգումենտները</i>՝ հաստատունների պես։
+<code>GetCustomAttribute&lt;T&gt;()</code>-ի ամեն կանչ ստեղծում է <b>նոր</b> attribute object։
+Այստեղից երկու հետևանք՝ attribute-ի մեջ փոփոխվող վիճակ պահելն անիմաստ է (հաջորդ անգամ կստանաս մաքուր
+instance), իսկ attribute-ի արգումենտները պարտավոր են լինել compile time-ի հաստատուններ՝ դրանք
+constructor-ի մեջ հաշվել չի կարելի։</p>`,
+        links: [
+          { label: "MS Docs — Creating custom attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/creating-custom-attributes" },
+          { label: "MS Docs — Accessing attributes by using reflection", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/accessing-attributes-by-using-reflection" }
+        ],
+        task: {
+          q: "Ի՞նչ է անում [Route(«api/products»)] attribute-ն ինքն իրեն, եթե reflection-ը այն չի կարդում?",
+          options: [
+            "Ավտոմատ գրանցում է route-ը web-սերվերում",
+            "Ոչինչ՝ սա ընդամենը նշան է metadata-ի մեջ, քանի դեռ ինչ-որ մեկը այն չի կարդացել",
+            "Մեթոդը վերանվանում է api/products",
+            "Ստուգվում է compiler-ի կողմից և ինքն է կանչում մեթոդը հարցման ժամանակ"
+          ],
+          answer: 1,
+          explain: "Attribute-ը տվյալ է, ոչ թե վարքագիծ։ Այն աշխատում է միայն այն պատճառով, որ framework-ը reflection-ով անցնում է type-երի վրայով և կարդում այդ նշանները։"
+        }
+      },
+      {
+        id: "refl-6",
+        title: "Plugin-ներ և scan-and-register",
+        subtitle: "Փնտրում ենք բոլորին, ովքեր պետք եղածն անել գիտեն",
+        theory: `
+<p>Դու հայտարարություն ես կախում՝ «պետք են բոլորը, ովքեր կիթառ նվագել գիտեն»։ Անունները չգիտես՝
+գիտես միայն կարողությունը։ Ով արձագանքի, նրան էլ վերցնում ես։</p>
+<p>.NET-ում «կարողությունը» interface-ն է։ Reflection-ը վերցնում է assembly-ն, անցնում
+<code>GetTypes()</code>-ի վրայով, դեն է նետում abstract-ներն ու interface-ները, իսկ մնացածներին
+ստուգում է հարցով՝ <code>typeof(IPlugin).IsAssignableFrom(type)</code>՝ «կարելի՞ է այս type-ը դնել
+<code>IPlugin</code> փոփոխականի մեջ»։ Սազեց՝ ստեղծում ենք <code>Activator</code>-ով։</p>
+<p>Նույն հնարքը տալիս է <b>scan-and-register</b> DI-ի համար՝ գտնում ենք բոլոր class-երը ըստ
+պայմանավորվածության (<code>OrderService</code>-ը իրականացնում է <code>IOrderService</code>-ը) և
+գրանցում մեկ ցիկլով՝ հարյուր տող ձեռքով գրելու փոխարեն։ Կանոնը մեկն է՝ սկանավորիր <i>մեկ անգամ
+մեկնարկի ժամանակ</i>, ոչ թե ամեն հարցման վրա։</p>`,
+        code: `using System.Reflection;
+
+public interface IPlugin
+{
+    string Name { get; }
+    void Execute();
+}
+
+public static class PluginScanner
+{
+    public static IEnumerable<IPlugin> Load(Assembly assembly)
+    {
+        foreach (Type type in assembly.GetTypes())
+        {
+            // հենց interface-ը և abstract class-երը ստեղծել չի կարելի
+            if (type.IsInterface || type.IsAbstract) continue;
+
+            // «տեղավորվու՞մ է type-ը IPlugin փոփոխականի մեջ»
+            if (!typeof(IPlugin).IsAssignableFrom(type)) continue;
+
+            if (Activator.CreateInstance(type) is IPlugin plugin)
+                yield return plugin;
+        }
+    }
+}
+
+// Իր assembly-ն թե ուրիշի DLL-ը՝ կոդը նույնն է
+Assembly asm = Assembly.LoadFrom("plugins/SamplePlugin.dll");
+foreach (IPlugin p in PluginScanner.Load(asm))
+    p.Execute();`,
+        deep: `<p><b>Ավելի խորը։</b> <code>IsAssignableFrom</code>-ի հերթականությունը գրեթե բոլորը
+շփոթում են։ Կարդա այն այսպես՝ «ձախին կարելի է վերագրել աջը»՝
+<code>typeof(IPlugin).IsAssignableFrom(impl)</code>։ Հակառակը գրեթե միշտ <code>false</code> է։
+Երկրորդ ստորջրյա քարը՝ ուրիշի DLL-ի <code>GetTypes()</code>-ը կարող է նետել
+<code>ReflectionTypeLoadException</code>, եթե կախվածությունների մի մասը չգտնվի՝ այդ exception-ն
+ունի <code>Types</code> հատկություն արդեն բեռնված type-երով, այնպես որ սկաները կարելի է շարունակել։
+Եվ երրորդը՝ նույն DLL-ը, բեռնված երկու տարբեր <code>AssemblyLoadContext</code>-ի մեջ, տալիս է
+<b>տարբեր</b> <code>Type</code> object-եր, և interface-ի ստուգումը հանկարծ կվերադարձնի
+<code>false</code>։</p>`,
+        links: [
+          { label: "MS Docs — Create an app with plugin support", url: "https://learn.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support" },
+          { label: "MS Docs — Type.IsAssignableFrom", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.isassignablefrom" }
+        ],
+        task: {
+          q: "Ինչու՞ են plugin-ների սկաներում գրում typeof(IPlugin).IsAssignableFrom(type), ոչ թե type.IsAssignableFrom(typeof(IPlugin))?",
+          options: [
+            "Հերթականությունը կարևոր չէ, երկու տարբերակն էլ նույնն են տալիս",
+            "Մեթոդը կարդացվում է որպես «ձախին կարելի է վերագրել աջը», ուրեմն interface-ը պետք է ձախում լինի",
+            "Հակառակը չի կարելի՝ interface-ները Type object չունեն",
+            "Այդպես է պահանջում Activator.CreateInstance-ը"
+          ],
+          answer: 1,
+          explain: "IsAssignableFrom-ը պատասխանում է հարցին՝ «տեղավորվու՞մ է աջ type-ի արժեքը ձախի փոփոխականի մեջ»։ Plugin-ը վերագրում են IPlugin փոփոխականին, դրա համար էլ interface-ը ձախում է։"
+        }
+      },
+      {
+        id: "refl-7",
+        title: "Reflection-ի գինը և այլընտրանքները",
+        subtitle: "Ամեն անգամ ճանապարհը հարցնելը երկար է",
+        theory: `
+<p>Կարելի է ամեն անգամ համարը փնտրել հաստ տեղեկատուում։ Իսկ կարելի է մեկ անգամ գտնել և պահել
+կոնտակտների մեջ։ Reflection-ը տեղեկատուն է՝ որոնում ըստ metadata-ի, ստուգումներ, արգումենտների
+փաթեթավորում <code>object</code>-ի մեջ։ Ուղիղ կանչը՝ <code>product.Name</code>-ը, կոնտակտն է։</p>
+<p>Այստեղից մեկ երկաթյա կանոն՝ <b>արտացոլիր մեկ անգամ մեկնարկի ժամանակ</b>, արդյունքը դիր
+<code>Dictionary&lt;string, PropertyInfo&gt;</code>-ի մեջ և հետո աշխատիր դրա հետ։ Երբեք մի կանչիր
+<code>GetProperty</code>, <code>GetMethod</code> կամ <code>GetCustomAttribute</code> տաք ցիկլի
+ներսում առանց cache-ի՝ սա «սեփական framework-ներում» դանդաղումների ամենահաճախ հանդիպող աղբյուրն
+է։</p>
+<p>Իսկ հաճախ reflection-ը պարզապես պետք չէ։ Ստուգիր այլընտրանքները՝</p>
+<ul>
+<li>Type-երը հայտնի են նախապես՝ <b>interface</b> կամ generic։</li>
+<li>Պետք է JSON՝ <code>System.Text.Json</code>, իսկ արագության համար՝ նրա source generation-ը։</li>
+<li>Կանչ տաք ճանապարհին՝ <b>delegate</b>, կառուցված մեկ անգամ։</li>
+<li>Պետք է «ըստ նշանի» կոդ compile time-ում՝ <b>source generators</b>՝ նրանք գրում են սովորական C#,
+որը գոյատևում է trimming-ից և Native AOT-ից հետո։</li>
+</ul>`,
+        code: `using System.Reflection;
+
+static class PropCache<T>
+{
+    private static readonly Dictionary<string, PropertyInfo?> Cache = new();
+
+    public static PropertyInfo? Get(string name)
+    {
+        if (Cache.TryGetValue(name, out PropertyInfo? prop)) return prop;
+        prop = typeof(T).GetProperty(name);   // որոնում ըստ metadata-ի՝ մեկ անգամ
+        Cache[name] = prop;
+        return prop;
+    }
+}
+
+static void PrintNames(List<Product> products)
+{
+    // Վատ՝ GetProperty-ն կրկնվում է ամեն տարրի վրա
+    // foreach (Product p in products)
+    //     Console.WriteLine(typeof(Product).GetProperty("Name")!.GetValue(p));
+
+    // Նորմալ՝ գտանք մեկ անգամ, հետո միայն կարդում ենք
+    PropertyInfo? prop = PropCache<Product>.Get("Name");
+    foreach (Product p in products)
+        Console.WriteLine(prop?.GetValue(p));
+
+    // Արագ՝ reflection-ը մեկ անգամ վերածում ենք delegate-ի
+    var getName = typeof(Product).GetProperty("Name")!.GetMethod!
+        .CreateDelegate<Func<Product, string>>();
+    foreach (Product p in products)
+        Console.WriteLine(getName(p));       // գրեթե սովորական կանչի պես
+}`,
+        deep: `<p><b>Ավելի խորը։</b> <code>PropertyInfo</code>-ի cache-ավորումը հանում է միայն
+<i>որոնումը</i>։ Ինքը՝ <code>GetValue</code>-ն, միևնույն է անցնում է հասանելիության ստուգումների
+միջով և արդյունքը փաթեթավորում <code>object</code>-ի մեջ։ Իսկական թռիչք տալիս է գտնված անդամի
+վերածումը տիպավորված delegate-ի (<code>CreateDelegate&lt;Func&lt;Product, string&gt;&gt;()</code>
+կամ compile արված <code>Expression</code>)՝ դրանից հետո կանչը գրեթե չի տարբերվում ուղիղից,
+որովհետև JIT-ը տեսնում է սովորական մեթոդի կանչ։ Հենց այդպես են կառուցված արագ serializer-ները՝
+reflection-ը նրանց մոտ ապրում է միայն «տաքացման» փուլում։</p>`,
+        links: [
+          { label: "MS Docs — Prepare libraries for trimming", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming" },
+          { label: "MS Docs — Source generators", url: "https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/source-generators-overview" }
+        ],
+        task: {
+          q: "Framework-ը ամեն HTTP-հարցման վրա կարդում է controller-ի մեթոդի [Route] attribute-ը։ Ո՞րն է ավելի ճիշտ?",
+          options: [
+            "Թողնել ինչպես կա՝ GetCustomAttribute-ը էժան գործողություն է",
+            "Մեկ անգամ մեկնարկի ժամանակ սկանավորել controller-ները և route-երը դնել Dictionary-ի մեջ",
+            "Անջատել compiler-ի օպտիմիզացիաները, որպեսզի reflection-ն ավելի արագ աշխատի",
+            "Attribute-ի կարդալը փոխարինել Type.GetType-ով՝ ըստ string-ի անվան"
+          ],
+          answer: 1,
+          explain: "Ամեն GetCustomAttribute-ը որոնում է ըստ metadata-ի գումարած նոր attribute object։ Սկանավորում են մեկ անգամ մեկնարկին, իսկ runtime-ում հարվածում են պատրաստի բառարանին։"
+        }
+      }
+    ]
+  },
 ];
 
 // Same world order as the Russian data file.
@@ -2098,6 +3064,8 @@ const WORLD_ORDER = [
   "creational",
   "structural",
   "behavioral",
+  "assemblies",
+  "reflection",
 ];
 const orderedWorlds = WORLD_ORDER
   .map(id => WORLDS.find(w => w.id === id))

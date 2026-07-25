@@ -2083,6 +2083,951 @@ mark says: "only call it if there's someone to answer".</p>`,
       }
     ]
   },
+
+  /* ================= WORLD 10: NAMESPACES / ASSEMBLIES / NUGET ================= */
+  {
+    id: "assemblies",
+    name: "Namespaces, Assemblies & NuGet",
+    icon: "▦",
+    blurb: "How code gets an address, turns into a DLL with a passport, and arrives in packages from NuGet.",
+    levels: [
+      {
+        id: "asm-1",
+        title: "Namespace — the address of a type",
+        subtitle: "City, street, house — so names don't collide",
+        theory: `
+<p>In a big city there are hundreds of people called Anna. You tell them apart by address:
+Anna from Baker Street and Anna from Oak Avenue. A <b>namespace</b> is exactly that kind of
+address for types. A type's full name is its address: <code>Acme.Shop.Order</code> and
+<code>Contoso.Crm.Order</code> are two different classes, even though the short name is the same.</p>
+<p>It matters what a namespace <i>doesn't</i> do: it doesn't create a file, it doesn't create a
+folder, and it isn't the same thing as an assembly. It only groups names. The habit of making
+folder = namespace is a convenient human agreement, not a compiler rule.</p>
+<p>Typing full addresses every time hurts, so there is <code>using</code>:</p>
+<ul>
+<li><code>using System.IO;</code> — call types from here by their short name.</li>
+<li><code>using Json = System.Text.Json;</code> — an alias, a lifesaver when names clash.</li>
+<li><code>using static System.Math;</code> — pulls in static members: instead of <code>Math.PI</code>
+just <code>PI</code>.</li>
+<li><code>global using System;</code> — an import for the whole project at once, usually kept in one
+file called <code>GlobalUsings.cs</code>.</li>
+</ul>
+<p>And the <code>ImplicitUsings</code> property in the project is the SDK writing a batch of
+<code>global using</code> lines for you (into a generated file under <code>obj/</code>). That's why in
+a new project <code>Console.WriteLine</code> works without a single <code>using</code> line.</p>`,
+        code: `// namespace = an address, not a file and not a folder
+namespace Acme.Shop.Orders;   // file-scoped form, C# 10+
+
+public class Order { }
+
+// ---------- another file ----------
+using System;
+using Acme.Shop.Orders;
+
+// two different Orders — pull them apart with aliases
+using ShopOrder = Acme.Shop.Order;
+using CrmOrder  = Contoso.Crm.Order;
+
+// static members without the type name: Math.PI -> PI
+using static System.Math;
+
+// ---------- GlobalUsings.cs: an import for the whole project ----------
+global using System.Linq;
+global using System.Collections.Generic;
+
+// the full name always works, even without a using
+var direct = new Acme.Shop.Orders.Order();
+double area = Round(PI * Pow(2, 2), 2);   // this one comes from using static`,
+        deep: `<p><b>Deeper:</b> one assembly happily holds many namespaces — and the other way round,
+one namespace can technically be spread across several assemblies (rarely done, because then nobody
+knows which DLL to reference). Also, renaming a namespace is a <b>breaking change</b> for everyone
+already using your library: their <code>using</code> stops compiling. So you pick the address once
+and live with it.</p>`,
+        links: [
+          { label: "MS Learn — namespace", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/namespace" },
+          { label: "MS Learn — using directive (alias, static, global)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive" }
+        ],
+        task: {
+          kind: "write",
+          q: "You don't want to write using System.Linq; in every file of the project. Write a single directive that imports this namespace into ALL files of the project.",
+          placeholder: "directive...",
+          must: ["globalusing", "system.linq"],
+          solution: "global using System.Linq;",
+          explain: "global using applies to the whole project. Lines like this usually go into one GlobalUsings.cs file so they're easy to find."
+        }
+      },
+      {
+        id: "asm-2",
+        title: "An assembly and its manifest",
+        subtitle: "What's inside a DLL besides code",
+        theory: `
+<p>Picture a parcel. Inside is the product, outside is a label: who sent it, what's in it, what
+else you need to add. An <b>assembly</b> is that kind of parcel with code in it. Usually it's a
+single <code>.dll</code> file (a library) or the executable output of an app. An assembly is the
+smallest unit you <i>ship</i>, <i>version</i> and reference.</p>
+<p>There are four things inside an assembly:</p>
+<ul>
+<li><b>IL</b> (Intermediate Language) — compiled code, not machine code yet.</li>
+<li><b>Metadata</b> — a description of types, methods, fields, signatures.</li>
+<li><b>Manifest</b> — the label on the parcel: name, version, culture, key, list of assemblies it needs.</li>
+<li><b>Resources</b> — optional: strings, images, embedded files.</li>
+</ul>
+<p>The manifest isn't a separate little file you edit by hand. The compiler embeds it into the same
+DLL. The manifest is exactly how the runtime knows what it loaded and what else it has to pull in.</p>
+<p>One more thing people mix up: <code>internal</code> is a boundary of the <i>assembly</i>, not of a
+namespace. From outside the DLL only <code>public</code> is visible.</p>`,
+        code: `// Inside Acme.Shop.dll:
+//   Manifest   — who I am + what I need
+//   Metadata   — types, methods, fields
+//   IL         — the code itself
+//   Resources  — optional strings and images
+
+using System.Reflection;
+
+Assembly asm = Assembly.GetExecutingAssembly();
+
+Console.WriteLine(asm.FullName);
+// Acme.Shop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+
+Console.WriteLine(asm.GetName().Name);     // Acme.Shop
+Console.WriteLine(asm.GetName().Version);  // 1.0.0.0
+
+// the list of dependencies — also strings from the manifest
+foreach (AssemblyName dep in asm.GetReferencedAssemblies())
+    Console.WriteLine(dep.Name + " " + dep.Version);
+
+public class VisibleOutsideAssembly { }   // visible to whoever references the DLL
+internal class OnlyInsideThisAssembly { } // visible only inside this assembly`,
+        deep: `<p><b>Deeper:</b> historically an assembly could be made of several files —
+<i>modules</i> (<code>.netmodule</code>). The manifest lived in only one of them, the rest simply
+belonged to the same identity: from the outside it was still <b>one</b> assembly, and
+<code>internal</code> was shared across all of its modules. That's how people built C# plus VB in a
+single assembly and loaded parts on demand. Today <code>dotnet build</code> gives you one project →
+one assembly → one file, and you'll only meet modules in old documents.</p>`,
+        links: [
+          { label: "MS Learn — Assemblies in .NET", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/" },
+          { label: "MS Learn — Assembly manifest", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/manifest" }
+        ],
+        task: {
+          q: "Which part of an assembly describes the assembly itself — its name, version and the list of dependencies it needs?",
+          options: [
+            "IL — the compiled code of the methods",
+            "Manifest",
+            "Resources — embedded strings and images",
+            "Metadata about types and method signatures"
+          ],
+          answer: 1,
+          explain: "The manifest is the assembly's ID card and packing slip: identity plus the list of dependencies. Metadata describes types, IL is the code, resources are data."
+        }
+      },
+      {
+        id: "asm-3",
+        title: "Identity and versions",
+        subtitle: "A file name is not a passport",
+        theory: `
+<p>Two people called Smith don't get confused, because each has a passport: surname, date of birth,
+number. Same for an assembly. Its <b>identity</b> is four fields:
+<code>simple name</code>, <code>version</code>, <code>culture</code> and
+<code>public key token</code>. Two DLLs with the same file name <code>Utils.dll</code> are different
+assemblies to the runtime if even one of those fields differs.</p>
+<p>A version is written as <code>Major.Minor.Build.Revision</code>. Major — breaking changes,
+Minor — new features that don't break anything, Build — fixes, Revision — a build counter.</p>
+<p>A project carries several different versions at once, and they are not the same thing:</p>
+<ul>
+<li><code>AssemblyVersion</code> — part of the identity; historically binding went by this one.</li>
+<li><code>FileVersion</code> — only the file properties in Windows, no effect on loading.</li>
+<li><code>InformationalVersion</code> — for humans and logs, you can append the commit hash.</li>
+<li><code>Version</code> — the NuGet package version, following SemVer.</li>
+</ul>
+<p><b>Strong name</b> means signing the assembly with a key pair. A
+<code>PublicKeyToken</code> shows up in the identity — a short hash of the public key. It proves
+origin and file integrity, but it does <i>not</i> make the code safe by itself.</p>`,
+        code: `<!-- Acme.Billing.csproj -->
+<PropertyGroup>
+  <!-- NuGet package version (SemVer) -->
+  <Version>2.4.1</Version>
+
+  <!-- part of the assembly identity: binding used to go by this -->
+  <AssemblyVersion>2.4.1.0</AssemblyVersion>
+
+  <!-- only the file properties in Windows Explorer -->
+  <FileVersion>2.4.1.1234</FileVersion>
+
+  <!-- for humans and logs: you can append the commit -->
+  <InformationalVersion>2.4.1+git.abc123</InformationalVersion>
+
+  <!-- strong name: signing with a key (once required for the GAC) -->
+  <SignAssembly>true</SignAssembly>
+  <AssemblyOriginatorKeyFile>acme.snk</AssemblyOriginatorKeyFile>
+</PropertyGroup>
+
+<!-- The full identity reads like this:
+
+Acme.Billing, Version=2.4.1.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+ ^simple name          ^version         ^culture             ^public key hash
+
+Culture=neutral — an ordinary assembly; a culture like hy-AM shows up
+on satellite assemblies that carry translations.                        -->`,
+        deep: `<p><b>Deeper:</b> bumping the version can be useful, and it can hurt. If you raise
+<code>AssemblyVersion</code> on every patch, then on .NET Framework everyone compiled against the
+previous version asks for that exact number — and crashes without a redirect. So many libraries keep
+<code>AssemblyVersion</code> coarse (say <code>2.0.0.0</code> for the whole major line) and expose the
+exact build through <code>FileVersion</code> and <code>InformationalVersion</code>. In modern .NET the
+version is picked during restore, so the problem is milder — but the habit stuck.</p>`,
+        links: [
+          { label: "MS Learn — Assembly names (identity)", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/identify" },
+          { label: "MS Learn — Strong-named assemblies", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/strong-named" }
+        ],
+        task: {
+          q: "There are two DLLs on disk, both called Utils.dll. What makes them different assemblies as far as the runtime is concerned?",
+          options: [
+            "A different file size",
+            "Different creation date and time",
+            "A difference in identity: version, culture or public key token",
+            "The fact that they sit in different folders"
+          ],
+          answer: 2,
+          explain: "The file name is for humans. Identity is simple name + version + culture + public key token; a difference in any of those fields means a different assembly."
+        }
+      },
+      {
+        id: "asm-4",
+        title: "Private, shared and DLL Hell",
+        subtitle: "Your own copy in your backpack vs a shared warehouse",
+        theory: `
+<p>Two ways to live with a tool. First: everyone carries their own screwdriver — heavier, but nobody
+takes yours away. Second: one screwdriver in a shared warehouse — economical, but if someone swaps it
+for a different model, everyone's work breaks. That is exactly <b>private</b> versus <b>shared</b>
+assemblies.</p>
+<p>A <b>private assembly</b> sits in the application's folder, right next to it. Two apps on the same
+machine can calmly use different versions of the same library — each has its own copy. This is the
+default behaviour across all of modern .NET.</p>
+<p>A <b>shared assembly</b> is one installed copy for many applications. On .NET Framework that was the
+<b>GAC</b> (Global Assembly Cache): it could hold versions side-by-side, but it demanded a strong name,
+a separate install and update policies. The name <b>DLL Hell</b> grew up around exactly this: you
+update the shared library and nobody knows which application just broke.</p>
+<p>In .NET Core and later there's no classic GAC. What's shared today is the NuGet cache, the shared
+framework from the runtime and, if you want it, one version list for the whole repository. The rule:
+<i>private by default, share through packages</i>.</p>`,
+        code: `# Modern: private copies next to the app
+dotnet publish -c Release
+
+# MyApp/
+#   MyApp.dll
+#   Acme.Billing.dll            <- its own copy of version 2.0
+#   Acme.Shared.dll
+#   MyApp.deps.json             <- dependency graph, resolved ahead of time
+#   MyApp.runtimeconfig.json    <- runtime settings
+
+# Another app on the same machine:
+# OtherApp/
+#   Acme.Billing.dll            <- version 1.0, and nobody gets in the way
+
+# ------------------------------------------------------------------
+# Classic .NET Framework: the shared GAC warehouse
+# GAC
+#  |-- Acme.Billing 1.0.0.0     <- side-by-side versions
+#  |-- Acme.Billing 2.0.0.0
+# Required a strong name and an install into the system.
+# ------------------------------------------------------------------
+
+<!-- A patch for a version conflict in app.config (.NET Framework) -->
+<dependentAssembly>
+  <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" />
+  <bindingRedirect oldVersion="0.0.0.0-13.0.0.0" newVersion="13.0.0.0" />
+</dependentAssembly>
+<!-- whoever asks for anything up to 13.0.0.0 gets 13.0.0.0 -->`,
+        deep: `<p><b>Deeper:</b> <code>bindingRedirect</code> only cures a <i>mismatch of numbers</i>,
+not API incompatibility. If library A calls a method that was removed in 13.0, the redirect will
+honestly hand it 13.0 — and the app will crash at run time with a
+<code>MissingMethodException</code>. That's why the modern approach is different: the conflict is
+settled <b>before the app starts</b>, during restore, by picking one version for everyone.
+Compilation says I was built against 1.2, restore says 2.0 is what ships, and the runtime just loads
+whatever was placed next to the app.</p>`,
+        links: [
+          { label: "MS Learn — Global Assembly Cache", url: "https://learn.microsoft.com/en-us/dotnet/framework/app-domains/gac" },
+          { label: "MS Learn — .NET application publishing", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/" }
+        ],
+        task: {
+          q: "Why doesn't modern .NET use a shared system-wide assembly store like the GAC by default?",
+          options: [
+            "The GAC only works on Linux, and .NET is cross-platform",
+            "Private copies next to the app give every application its own version, so updating one doesn't break the others",
+            "The GAC requires NuGet, and NuGet came later",
+            "Assemblies load more slowly from a shared store, so it was dropped"
+          ],
+          answer: 1,
+          explain: "Isolation beats saving disk space. Your own copy in the app folder means versions can't clash between applications — that's the way out of DLL Hell."
+        }
+      },
+      {
+        id: "asm-5",
+        title: "Class libraries and TFMs",
+        subtitle: ".NET Standard is a socket specification",
+        theory: `
+<p>A <b>class library</b> is a project with no entry point that compiles into a DLL so the code can be
+reused. Domain models, contracts, helpers — all of that usually lives in libraries, and the
+application (an API, a worker) references them.</p>
+<p>A <b>TFM</b> (Target Framework Moniker) is a string like <code>net8.0</code> in the project. It
+answers two questions: which APIs are available at compile time, and who will be able to use the
+result.</p>
+<p>Now the part people mix up most. <b>.NET Standard</b> is a <i>specification</i>, a list of APIs, not
+a platform: applications don't run on it. It's like a socket standard — it describes the shape, but it
+doesn't supply electricity itself. <b>Modern .NET</b> (<code>net8.0</code>) is the opposite: a real
+platform with a runtime, an SDK and libraries; it's the actual socket in the wall that works.</p>
+<p>The practice is simple: if old .NET Framework apps have to reference your library, take
+<code>netstandard2.0</code>. If all your consumers are on modern .NET, go straight to
+<code>net8.0</code>. Need both — multi-targeting. And pick the TFM by your consumers, not by habit: a
+<code>net48</code> app can reference a <code>netstandard2.0</code> library, but it cannot reference a
+library built only for <code>net8.0</code>.</p>`,
+        code: `# a new class library -> Acme.Shop.Domain.dll
+dotnet new classlib -n Acme.Shop.Domain
+
+# reference it from the app (project reference, no NuGet)
+dotnet add Acme.Shop.Api reference Acme.Shop.Domain
+
+<!-- option 1: modern .NET only -->
+<TargetFramework>net8.0</TargetFramework>
+
+<!-- option 2: old .NET Framework needed as well -->
+<TargetFramework>netstandard2.0</TargetFramework>
+
+<!-- option 3: two targets at once, two DLLs in the package -->
+<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+
+// with multi-targeting you can branch the code per target
+public static string Describe()
+{
+#if NET8_0_OR_GREATER
+    return "modern APIs available";
+#else
+    return "wide compatibility mode";
+#endif
+}
+
+// inside a solution — project reference; across repositories — a NuGet package`,
+        deep: `<p><b>Deeper:</b> <code>netstandard2.1</code> looks like just a slightly bigger version,
+but it has a trap: .NET Framework <b>doesn't support it at all</b>. So moving from <code>2.0</code> to
+<code>2.1</code> doesn't add a few APIs — it throws away the entire Framework audience you took
+Standard for in the first place. That leaves two options that are actually alive:
+<code>netstandard2.0</code> (maximum compatibility) or modern <code>net8.0</code>. The in-between
+<code>2.1</code> is almost always the worst of both worlds.</p>`,
+        links: [
+          { label: "MS Learn — .NET Standard", url: "https://learn.microsoft.com/en-us/dotnet/standard/net-standard" },
+          { label: "MS Learn — Target frameworks (TFM)", url: "https://learn.microsoft.com/en-us/dotnet/standard/frameworks" }
+        ],
+        task: {
+          q: "Old applications on .NET Framework 4.8 have to reference your library. Which TargetFramework do you pick?",
+          options: [
+            "net8.0 — it's the newest, so it must be compatible with everything",
+            "netstandard2.1 — newer than 2.0, and it supports Framework",
+            "netstandard2.0",
+            "net48 — there's no other option"
+          ],
+          answer: 2,
+          explain: "netstandard2.0 is the only Standard version .NET Framework 4.6.1+ understands, and modern .NET references such libraries too. netstandard2.1 isn't supported by Framework at all."
+        }
+      },
+      {
+        id: "asm-6",
+        title: "NuGet: PackageReference and restore",
+        subtitle: "A shop of ready-made parts — with a shopping list",
+        theory: `
+<p>You don't forge your own bolts — you buy them. <b>NuGet</b> is the parts shop for .NET, and a
+<code>.nupkg</code> package is the box: inside are built DLLs for one or more TFMs, plus metadata
+(id, version, dependencies, licence).</p>
+<p>You don't keep those DLLs in the repository. The project holds only the <i>shopping list</i> —
+a &lt;PackageReference /&gt; with an id and a version. The <code>dotnet restore</code> command reads
+the list, builds the dependency graph, downloads what's missing into a shared cache
+(<code>~/.nuget/packages</code>) and writes the resolved result into
+<code>obj/project.assets.json</code>.</p>
+<p>Then it gets interesting: <b>transitive</b> dependencies. You referenced one package, and it
+dragged in three of its own. If two packages want different versions of the same library, NuGet tries
+to pick <i>one</i> that satisfies everybody. If it can't, restore complains.</p>
+<p>Cures, in order: look at the graph with
+<code>dotnet list package --include-transitive</code>; update packages to compatible versions;
+if you have to, pin the version with an explicit reference; in a big repository move all versions into
+one <code>Directory.Packages.props</code> file. And never copy DLLs into
+<code>bin</code> by hand.</p>`,
+        code: `dotnet add package Serilog --version 4.0.0
+# info : PackageReference for package 'Serilog' version '4.0.0' added to project.
+
+<!-- a shopping-list line appeared in the csproj -->
+<ItemGroup>
+  <PackageReference Include="Serilog" Version="4.0.0" />
+</ItemGroup>
+
+dotnet restore
+# downloads the packages into the shared cache ~/.nuget/packages
+# and writes the resolved graph to obj/project.assets.json
+
+dotnet list package --include-transitive
+#   Serilog             4.0.0        <- I asked for this one myself
+#   > Acme.Shared       2.0.0        <- came in transitively, I never asked
+
+# Conflict: package A needs Acme.Shared >= 1.0, package B needs >= 2.0.
+# NuGet looks for one version for all. If it can't find one, restore fails.
+
+<!-- the fix: pin the version with an explicit reference -->
+<PackageReference Include="Acme.Shared" Version="2.1.0" />
+
+dotnet list package --outdated   # what has already gone stale`,
+        deep: `<p><b>Deeper:</b> in the NuGet graph the winner isn't the newest version, it's the
+<b>lowest one that satisfies every constraint</b>. That's on purpose: it makes the result of restore
+predictable, so it doesn't change on its own just because someone published a new release to
+nuget.org. Which leads to a corollary — if you want a specific version, you have to ask for it with a
+<i>direct</i> &lt;PackageReference /&gt;: a direct reference always beats any transitive wishes.</p>`,
+        links: [
+          { label: "NuGet — PackageReference in project files", url: "https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files" },
+          { label: "NuGet — Dependency resolution", url: "https://learn.microsoft.com/en-us/nuget/concepts/dependency-resolution" }
+        ],
+        task: {
+          kind: "write",
+          q: "Write the CLI command that adds the Serilog package to the project at exactly version 4.0.0.",
+          placeholder: "dotnet ...",
+          must: ["dotnetaddpackage", "serilog", "4.0.0"],
+          solution: "dotnet add package Serilog --version 4.0.0",
+          explain: "dotnet add package writes a PackageReference into the csproj and runs restore right away. Without --version it takes the latest stable version."
+        }
+      },
+      {
+        id: "asm-7",
+        title: "Settings: appsettings vs NuGet.config",
+        subtitle: "What the program reads and what the build reads",
+        theory: `
+<p>A flat has two different controls: the thermostat you turn every day, and the fuse box that decides
+how the electricity is wired at all. People mix them up, but they're different layers. In .NET it's
+the same: settings of the <i>application</i> and settings of the <i>project</i>.</p>
+<p><b>appsettings.json</b> is the thermostat. Your code reads it at run time: connection strings,
+timeouts, feature flags. Values stack in layers, and each next layer overrides the previous one:
+<code>appsettings.json</code> → <code>appsettings.Development.json</code> →
+user secrets → environment variables → command-line arguments. A nested key in an environment
+variable is written with a double underscore: <code>Shipping__DefaultCarrier</code>.</p>
+<p><b>NuGet.config</b> and <code>.csproj</code> are the fuse box. They're read not by the app but by
+<code>restore</code> and the build: where to download packages from and which versions to take.</p>
+<p>This is where the classic works on my machine, fails in CI comes from. NuGet merges configs from
+several levels: machine → user → repository. A developer added a private feed to their own user
+config — restore is green for them, and for a colleague and in CI it's package not found. The cure is
+a <code>NuGet.config</code> file at the root of the repository with <code>&lt;clear /&gt;</code> and an
+explicit list of sources: then every clone and CI take packages from the exact same place.</p>`,
+        code: `// appsettings.json — application settings (your code reads these)
+{
+  "ConnectionStrings": {
+    "ShopDb": "Server=localhost;Database=Shop"
+  },
+  "Shipping": {
+    "DefaultCarrier": "DHL",
+    "TimeoutSeconds": 30
+  }
+}
+
+// Layers, where each next one overrides the previous:
+//   appsettings.json -> appsettings.{Environment}.json -> user secrets
+//   -> environment variables -> command-line arguments
+// A nested key in an environment variable: Shipping__DefaultCarrier=UPS
+
+<!-- NuGet.config at the repo root — build settings (restore reads these) -->
+<configuration>
+  <packageSources>
+    <clear />   <!-- forget the feeds configured on this particular machine -->
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="acme-private" value="https://pkgs.example.com/acme/index.json" />
+  </packageSources>
+</configuration>
+<!-- Passwords and tokens are not stored here: they come from CI secrets
+     or a credential provider. -->`,
+        deep: `<p><b>Deeper:</b> <code>NuGet.config</code> only answers the question where to download
+from, while <i>which version</i> to take is decided by <code>PackageReference</code> and central
+version management. A fully reproducible restore only happens when both are pinned. And the nastiest
+scenario lives right here: if the same id and version sits on two feeds with different contents, the
+one that answers first wins — and that's a different one on different machines. The rescue is
+<code>packageSourceMapping</code>: a rule saying anything starting with <code>Acme.</code> comes only
+from the private feed makes the choice unambiguous.</p>`,
+        links: [
+          { label: "NuGet — nuget.config reference", url: "https://learn.microsoft.com/en-us/nuget/reference/nuget-config-file" },
+          { label: "MS Learn — Configuration in .NET", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration" }
+        ],
+        task: {
+          q: "Locally dotnet restore succeeds, but in CI it fails with 'package not found' on the internal package Acme.Shared. What's the most likely reason?",
+          options: [
+            "CI doesn't have enough RAM for restore",
+            "The private feed is declared only in the developer's user-level config, not in the repository's NuGet.config",
+            "The database connection string in appsettings.json is wrong",
+            "The version in PackageReference is written in words instead of digits"
+          ],
+          answer: 1,
+          explain: "NuGet merges the machine, user and repository configs. A source added only on your own machine doesn't exist in CI. Feeds are declared in a NuGet.config at the repository root, with &lt;clear /&gt; before the list."
+        }
+      }
+    ]
+  },
+
+  /* ================= WORLD 11: REFLECTION ================= */
+  {
+    id: "reflection",
+    name: "Reflection",
+    icon: "◉",
+    blurb: "A program reads its own metadata: it finds types, creates objects and calls methods by name.",
+    levels: [
+      {
+        id: "refl-1",
+        title: "What reflection is",
+        subtitle: "Every part has a little plate engraved on it",
+        theory: `
+<p>Picture a box of unfamiliar tools. Each one has a plate engraved on it: what it is called,
+what it is for, which attachments fit. You can pick up a tool you have never seen before, read the
+plate and start using it straight away.</p>
+<p>The compiler puts more than code into an assembly (a DLL or an EXE) — it also puts plates like
+that in there, the <b>metadata</b>: every type, its methods, properties, parameters, attributes.
+<b>Reflection</b> is the API that reads those plates <i>while the program runs</i> and can call
+whatever it found.</p>
+<p>The difference is simple. Ordinary code knows the names in advance: you write
+<code>user.Name</code> and the compiler checks it. Reflection learns the names at runtime — from a
+string, from a config, from somebody else's DLL. You are not working with <code>User</code>, you
+are working with a <code>Type</code> object that <i>describes</i> <code>User</code>.</p>`,
+        code: `// Ordinary code: the names are known at compile time
+var user = new User();
+user.Name = "Anna";
+Console.WriteLine(user.Name);
+
+// The same thing through reflection: we find the names at runtime
+using System.Reflection;
+
+Type type = typeof(User);
+object instance = Activator.CreateInstance(type)!;
+
+PropertyInfo? nameProp = type.GetProperty("Name");
+nameProp!.SetValue(instance, "Anna");
+Console.WriteLine(nameProp.GetValue(instance));   // Anna
+
+// Metadata lives inside the assembly itself — you can simply browse it
+Assembly asm = type.Assembly;
+Console.WriteLine(asm.FullName);`,
+        deep: `<p><b>Deeper:</b> reflection never &quot;decompiles&quot; anything and never guesses. It reads the very
+same metadata tables the runtime itself works from: the CLR uses them to JIT code, to check
+types and to find methods. So you get access to .NET's own internal directory. Hence the price:
+<code>typeof(User)</code> is almost a constant, while <code>Type.GetType(&quot;User&quot;)</code> is
+a real lookup by string. And hence the main danger: trimming and Native AOT strip out whatever
+&quot;nobody calls&quot;, and a call made through a string is invisible to them.</p>`,
+        links: [
+          { label: "MS Docs — Reflection and attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/" },
+          { label: "MS Docs — Reflection in .NET", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection" }
+        ],
+        task: {
+          q: "How is reflection different from a normal method call?",
+          options: [
+            "Reflection is faster because it goes around the compiler",
+            "Reflection finds types and members while the program runs — from metadata, not from names written into the code",
+            "Reflection is only needed for working with databases",
+            "Reflection switches off type checking for the whole program"
+          ],
+          answer: 1,
+          explain: "Reflection reads the assembly's metadata at runtime. That means a name can arrive as a string from a config — but the compiler can no longer check a string like that."
+        }
+      },
+      {
+        id: "refl-2",
+        title: "Type and the assembly",
+        subtitle: "Type is a type's passport",
+        theory: `
+<p><code>Type</code> is a passport. It states everything about the type: its name, whether it is a
+class or a struct, who its parent is, which interfaces it implements. The object itself is the
+person; <code>Type</code> is the document about them.</p>
+<p>You can get the passport in three ways:</p>
+<ul>
+<li><code>typeof(User)</code> — the type is known at compile time. The fastest and safest route.</li>
+<li><code>obj.GetType()</code> — ask an existing object what it really is.</li>
+<li><code>Type.GetType(&quot;name&quot;)</code> — the name arrived as a string at runtime. Easy to get
+wrong: you get <code>null</code> back, not an exception.</li>
+</ul>
+<p><b>Assembly</b> is the box itself, that is, a loaded DLL or EXE. It has
+<code>GetTypes()</code>: a list of every type inside. That is where every scanner starts — plugins,
+DI containers, test runners.</p>`,
+        code: `using System.Reflection;
+
+// 1) The type is known at compile time
+Type t1 = typeof(string);
+Type t2 = typeof(List<>);        // open generic: T is not set yet
+Type t3 = typeof(List<int>);     // closed generic
+
+// 2) We take the type from an existing object
+object value = "hello";
+Type t4 = value.GetType();       // System.String
+
+// 3) The type comes from a string — the name arrives at runtime
+Type? t5 = Type.GetType("System.Int32");
+Type? t6 = Type.GetType("Acme.Shop.Order, Acme.Shop");  // the assembly name too
+
+// Inspecting a whole assembly
+Assembly asm = typeof(Program).Assembly;
+Console.WriteLine(asm.FullName);
+
+foreach (Type type in asm.GetTypes())
+{
+    if (!type.IsClass || type.IsAbstract) continue;
+    Console.WriteLine(type.FullName + "  base=" + type.BaseType?.Name);
+}`,
+        deep: `<p><b>Deeper:</b> <code>Type.GetType(&quot;Acme.Shop.Order&quot;)</code> looks for the type
+in only two places: the assembly you are calling from, and the system library. It will not load
+somebody else's DLL by itself — which is why you need an <i>assembly-qualified</i> name of the form
+<code>&quot;Acme.Shop.Order, Acme.Shop&quot;</code>. The second trap: <code>typeof(List&lt;&gt;)</code>
+gives you an &quot;open&quot; type, its <code>IsGenericTypeDefinition == true</code>, and you cannot create
+an object from it. Close it first: <code>MakeGenericType(typeof(int))</code>.</p>`,
+        links: [
+          { label: "MS Docs — Type", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type" },
+          { label: "MS Docs — Type.GetType", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.gettype" }
+        ],
+        task: {
+          q: "A type name arrives from a config: &quot;Acme.Shop.Order&quot;. Type.GetType returned null, even though the class definitely exists. The most likely reason?",
+          options: [
+            "Type.GetType only works with value types",
+            "The name is not assembly-qualified, and GetType does not go hunting for the assembly on its own",
+            "You should have written typeof instead of Type.GetType",
+            "For public classes GetType always returns null"
+          ],
+          answer: 1,
+          explain: "GetType looks in the calling assembly and in the system library. For somebody else's DLL you need a name like &quot;Acme.Shop.Order, Acme.Shop&quot; — otherwise you get a silent null."
+        }
+      },
+      {
+        id: "refl-3",
+        title: "Members of a type: properties and methods",
+        subtitle: "The list of buttons on an unfamiliar remote",
+        theory: `
+<p>You found a remote with no labels on it. Reflection hands you a list of all its buttons: what
+each one is called, what it takes, whether you are allowed to press it. And it lets you press.</p>
+<p>Buttons are described by the &quot;info&quot; classes: <code>PropertyInfo</code> (a property,
+<code>GetValue</code> / <code>SetValue</code>), <code>MethodInfo</code> (a method,
+<code>Invoke</code>), <code>FieldInfo</code> (a field), <code>ConstructorInfo</code> (a constructor).
+They all share one parent — <code>MemberInfo</code>.</p>
+<p>An important detail: by default <code>GetMethod</code> and <code>GetProperty</code> only see
+<b>public</b> and <b>non-static</b> members. A private method comes back as <code>null</code> until
+you ask for it explicitly with <code>BindingFlags.Instance | BindingFlags.NonPublic</code>. Yes,
+reflection can call private members — that saves frameworks and tests, but it breaks encapsulation.</p>`,
+        code: `using System.Reflection;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; private set; }
+    public void ApplyDiscount(decimal percent) => Price *= 1 - percent;
+    private void Touch() { }
+}
+
+Type type = typeof(Product);
+object product = Activator.CreateInstance(type)!;
+
+// A property: read it and write it
+PropertyInfo name = type.GetProperty("Name")!;
+name.SetValue(product, "Tea");
+Console.WriteLine(name.GetValue(product));       // Tea
+
+// A method: call it, arguments go in as an object array
+MethodInfo apply = type.GetMethod("ApplyDiscount")!;
+apply.Invoke(product, new object[] { 0.10m });   // minus 10%
+
+// Private members — only if you ask with BindingFlags
+MethodInfo? touch = type.GetMethod("Touch",
+    BindingFlags.Instance | BindingFlags.NonPublic);
+touch?.Invoke(product, null);`,
+        deep: `<p><b>Deeper:</b> the signature of <code>Invoke</code> is
+<code>object Invoke(object, object[])</code> — which means every <code>int</code> and
+<code>decimal</code> gets packed into an <code>object</code> on the way in (<i>boxing</i>), and the
+result has to be cast back. One more thing: if the method throws inside, you will not catch that
+exception, you will catch <code>TargetInvocationException</code> — the real cause is hidden in
+<code>InnerException</code>. Debuggers and logs trip people up on this all the time.</p>`,
+        links: [
+          { label: "MS Docs — PropertyInfo", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.propertyinfo" },
+          { label: "MS Docs — BindingFlags", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.bindingflags" }
+        ],
+        task: {
+          kind: "write",
+          q: "You have a Type type and an object product. Read the value of the public property &quot;Name&quot; through reflection: first get the PropertyInfo, then take the value.",
+          placeholder: "two lines of C#...",
+          must: ["getproperty", "getvalue"],
+          solution: "var prop = type.GetProperty(nameof(Product.Name));\nobject? value = prop.GetValue(product);",
+          explain: "GetProperty finds the description of the property by name, GetValue reads the value off one specific instance. nameof beats a plain string: rename the property and the build breaks, not the runtime."
+        }
+      },
+      {
+        id: "refl-4",
+        title: "Creating objects: Activator",
+        subtitle: "A 3D printer: hand it a blueprint, get a thing",
+        theory: `
+<p><code>Activator.CreateInstance(type)</code> is a 3D printer. You do not write <code>new</code>,
+you feed it a blueprint (a <code>Type</code> object) and get a finished item back. The blueprint
+could have come from a config or from somebody else's DLL — the printer does not care.</p>
+<p>The options: no arguments, with constructor arguments, or straight through
+<code>ConstructorInfo.Invoke</code>. For generics you first close the type with
+<code>MakeGenericType</code>, otherwise there is nothing to create.</p>
+<p>Here is why this matters in practice. Combine &quot;create an object&quot; with &quot;walk the properties&quot;
+and you get a <b>mapper</b>: copying same-named properties from one object into another. That is
+exactly how serializers, ORMs and AutoMapper work — only far more optimized.</p>`,
+        code: `using System.Reflection;
+
+// Parameterless constructor
+object? a = Activator.CreateInstance(typeof(Product));
+
+// Constructor with arguments
+object? b = Activator.CreateInstance(typeof(List<int>), new object[] { 16 });
+
+// An open generic has to be "closed" first
+Type closed = typeof(List<>).MakeGenericType(typeof(string));
+object list = Activator.CreateInstance(closed)!;      // List<string>
+
+// In practice: copy same-named properties source -> target
+static void CopyProperties(object source, object target)
+{
+    Type srcType = source.GetType();
+    Type dstType = target.GetType();
+
+    foreach (PropertyInfo src in srcType.GetProperties())
+    {
+        if (!src.CanRead) continue;
+
+        PropertyInfo? dst = dstType.GetProperty(src.Name);
+        if (dst is null || !dst.CanWrite) continue;
+
+        // the types have to be compatible, otherwise SetValue will throw
+        if (!dst.PropertyType.IsAssignableFrom(src.PropertyType)) continue;
+
+        dst.SetValue(target, src.GetValue(source));
+    }
+}`,
+        deep: `<p><b>Deeper:</b> <code>Activator.CreateInstance</code> looks up the constructor and
+checks the arguments on every single call. For hot code the fix is this: find the
+<code>ConstructorInfo</code> once and <b>compile</b> a delegate out of it —
+<code>Expression.Lambda&lt;Func&lt;object&gt;&gt;(Expression.New(ctor)).Compile()</code>. After that,
+creating an object costs about as much as a plain <code>new</code>. Reflection runs once here, at
+startup; at runtime it is gone. Plus a small thing: for structs there is no parameterless
+constructor to look for — <code>CreateInstance</code> just returns the default value.</p>`,
+        links: [
+          { label: "MS Docs — Activator.CreateInstance", url: "https://learn.microsoft.com/en-us/dotnet/api/system.activator.createinstance" },
+          { label: "MS Docs — Reflection and generic types", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection-and-generic-types" }
+        ],
+        task: {
+          kind: "write",
+          q: "The variable Type t holds a type with a parameterless constructor. Create an instance of it while the program runs — one line.",
+          placeholder: "one line of C#...",
+          must: ["activator.createinstance"],
+          solution: "object? obj = Activator.CreateInstance(t);",
+          explain: "Activator.CreateInstance(t) finds the parameterless constructor and calls it. The result is an object, so from there you cast it to an interface or a base type."
+        }
+      },
+      {
+        id: "refl-5",
+        title: "Attributes and reflection",
+        subtitle: "Stickers on the boxes when you move house",
+        theory: `
+<p>When you move house you stick labels on the boxes: &quot;fragile&quot;, &quot;kitchen&quot;. The stickers
+themselves do nothing. They work only because the mover <i>reads</i> them.</p>
+<p>An <b>attribute</b> is the same kind of sticker, just on a class or a method. It goes into the
+metadata and sits there quietly. Reflection is the mover: <code>GetCustomAttribute&lt;T&gt;()</code>
+pulls the sticker off and makes a decision from it.</p>
+<p>All of this magic is built on one pair: mark it in the source, read it at runtime. That is how
+ASP.NET routes work (<code>[HttpGet]</code>), validation (<code>[Required]</code>), serialization
+(<code>[JsonPropertyName]</code>) and any labels of your own. An attribute is described by an
+ordinary class inherited from <code>Attribute</code>.</p>`,
+        code: `using System.Reflection;
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class RouteAttribute : Attribute
+{
+    public string Template { get; }
+    public RouteAttribute(string template) => Template = template;
+}
+
+[Route("api/products")]
+public class ProductsController
+{
+    [Route("")]
+    public void List() { }
+
+    [Route("{id}")]
+    public void GetById(int id) { }
+}
+
+// Reading the stickers at runtime
+Type type = typeof(ProductsController);
+RouteAttribute? onType = type.GetCustomAttribute<RouteAttribute>();
+Console.WriteLine(onType?.Template);          // api/products
+
+foreach (MethodInfo m in type.GetMethods(BindingFlags.Public
+        | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+{
+    RouteAttribute? route = m.GetCustomAttribute<RouteAttribute>();
+    if (route is null) continue;
+    Console.WriteLine(m.Name + " -> " + route.Template);
+}`,
+        deep: `<p><b>Deeper:</b> no instance of the attribute exists in memory until you ask for
+one. The metadata holds only the <i>arguments</i> — as constants. Every call to
+<code>GetCustomAttribute&lt;T&gt;()</code> creates a <b>new</b> attribute object. Two things follow
+from that: storing mutable state in an attribute is pointless (next time you will get a fresh
+instance), and the arguments of an attribute must be compile-time constants — you cannot compute
+them in the constructor.</p>`,
+        links: [
+          { label: "MS Docs — Creating custom attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/creating-custom-attributes" },
+          { label: "MS Docs — Accessing attributes by using reflection", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/accessing-attributes-by-using-reflection" }
+        ],
+        task: {
+          q: "What does the attribute [Route(&quot;api/products&quot;)] do on its own, if reflection never reads it?",
+          options: [
+            "It registers the route in the web server automatically",
+            "Nothing — it is just a label in the metadata until somebody reads it",
+            "It renames the method to api/products",
+            "The compiler checks it and it calls the method itself when a request arrives"
+          ],
+          answer: 1,
+          explain: "An attribute is data, not behaviour. It works only because the framework walks the types with reflection and reads those labels."
+        }
+      },
+      {
+        id: "refl-6",
+        title: "Plugins and scan-and-register",
+        subtitle: "Finding everyone who can do the thing",
+        theory: `
+<p>You put up a notice: &quot;looking for everyone who can play the guitar&quot;. You do not know any
+names — you only know the skill. Whoever answers, you take.</p>
+<p>In .NET a &quot;skill&quot; is an interface. Reflection takes an assembly, walks through
+<code>GetTypes()</code>, drops the abstract classes and the interfaces, and asks the rest one
+question: <code>typeof(IPlugin).IsAssignableFrom(type)</code> — &quot;can this type go into an
+<code>IPlugin</code> variable?&quot;. If it fits, we create it with <code>Activator</code>.</p>
+<p>The same trick gives you <b>scan-and-register</b> for DI: find every class by convention
+(<code>OrderService</code> implements <code>IOrderService</code>) and register them all in one loop
+instead of a hundred hand-written lines. There is one rule: scan <i>once at startup</i>, not on
+every request.</p>`,
+        code: `using System.Reflection;
+
+public interface IPlugin
+{
+    string Name { get; }
+    void Execute();
+}
+
+public static class PluginScanner
+{
+    public static IEnumerable<IPlugin> Load(Assembly assembly)
+    {
+        foreach (Type type in assembly.GetTypes())
+        {
+            // the interface itself and abstract classes cannot be created
+            if (type.IsInterface || type.IsAbstract) continue;
+
+            // "does type fit into an IPlugin variable?"
+            if (!typeof(IPlugin).IsAssignableFrom(type)) continue;
+
+            if (Activator.CreateInstance(type) is IPlugin plugin)
+                yield return plugin;
+        }
+    }
+}
+
+// Your own assembly or somebody else's DLL — the code is exactly the same
+Assembly asm = Assembly.LoadFrom("plugins/SamplePlugin.dll");
+foreach (IPlugin p in PluginScanner.Load(asm))
+    p.Execute();`,
+        deep: `<p><b>Deeper:</b> almost everybody gets the direction of <code>IsAssignableFrom</code>
+backwards. Read it as &quot;the left one can be assigned from the right one&quot;:
+<code>typeof(IPlugin).IsAssignableFrom(impl)</code>. The other way round is almost always
+<code>false</code>. The second pitfall: <code>GetTypes()</code> on somebody else's DLL can throw
+<code>ReflectionTypeLoadException</code> if some of the dependencies were not found — that
+exception has a <code>Types</code> property holding the types that did load, so the scanner can
+carry on. And the third: the same DLL loaded into two different
+<code>AssemblyLoadContext</code> instances gives you <b>different</b> <code>Type</code> objects, and
+the interface check suddenly returns <code>false</code>.</p>`,
+        links: [
+          { label: "MS Docs — Create an app with plugin support", url: "https://learn.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support" },
+          { label: "MS Docs — Type.IsAssignableFrom", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.isassignablefrom" }
+        ],
+        task: {
+          q: "Why do plugin scanners write typeof(IPlugin).IsAssignableFrom(type) and not type.IsAssignableFrom(typeof(IPlugin))?",
+          options: [
+            "The order does not matter, both versions do the same thing",
+            "The method reads as &quot;the left one can be assigned from the right one&quot;, so the interface has to be on the left",
+            "The other way round is impossible: interfaces have no Type object",
+            "Activator.CreateInstance demands it"
+          ],
+          answer: 1,
+          explain: "IsAssignableFrom answers the question &quot;will a value of the right-hand type fit into a variable of the left-hand type?&quot;. A plugin gets assigned to an IPlugin variable, so the interface goes on the left."
+        }
+      },
+      {
+        id: "refl-7",
+        title: "The cost of reflection, and the alternatives",
+        subtitle: "Asking for directions every single time is slow",
+        theory: `
+<p>You can look a number up in a fat directory every time. Or you can find it once and save it to
+your contacts. Reflection is the directory: searching the metadata, running checks, packing
+arguments into <code>object</code>. A direct <code>product.Name</code> call is the contact.</p>
+<p>From that comes one iron rule: <b>reflect once at startup</b>, drop the result into a
+<code>Dictionary&lt;string, PropertyInfo&gt;</code> and work with that from then on. Never call
+<code>GetProperty</code>, <code>GetMethod</code> or <code>GetCustomAttribute</code> inside a hot
+loop without a cache — it is the single most common source of slowdowns in home-grown frameworks.</p>
+<p>And quite often you do not need reflection at all. Check the alternatives:</p>
+<ul>
+<li>The types are known in advance — an <b>interface</b> or a generic.</li>
+<li>You need JSON — <code>System.Text.Json</code>, and its source generation for speed.</li>
+<li>A call on a hot path — a <b>delegate</b>, built once.</li>
+<li>You need code generated from a label at compile time — <b>source generators</b>: they write
+ordinary C# that survives trimming and Native AOT.</li>
+</ul>`,
+        code: `using System.Reflection;
+
+static class PropCache<T>
+{
+    private static readonly Dictionary<string, PropertyInfo?> Cache = new();
+
+    public static PropertyInfo? Get(string name)
+    {
+        if (Cache.TryGetValue(name, out PropertyInfo? prop)) return prop;
+        prop = typeof(T).GetProperty(name);   // a metadata lookup — done once
+        Cache[name] = prop;
+        return prop;
+    }
+}
+
+static void PrintNames(List<Product> products)
+{
+    // Bad: GetProperty repeats for every element
+    // foreach (Product p in products)
+    //     Console.WriteLine(typeof(Product).GetProperty("Name")!.GetValue(p));
+
+    // Fine: found once, after that it is only reading
+    PropertyInfo? prop = PropCache<Product>.Get("Name");
+    foreach (Product p in products)
+        Console.WriteLine(prop?.GetValue(p));
+
+    // Fast: turn reflection into a delegate, once
+    var getName = typeof(Product).GetProperty("Name")!.GetMethod!
+        .CreateDelegate<Func<Product, string>>();
+    foreach (Product p in products)
+        Console.WriteLine(getName(p));       // nearly a normal call
+}`,
+        deep: `<p><b>Deeper:</b> caching a <code>PropertyInfo</code> only removes the <i>lookup</i>.
+<code>GetValue</code> itself still goes through the access checks and packs the result into an
+<code>object</code>. The real jump comes from turning the member you found into a typed delegate
+(<code>CreateDelegate&lt;Func&lt;Product, string&gt;&gt;()</code> or a compiled
+<code>Expression</code>): after that the call is barely different from a direct one, because the JIT
+sees an ordinary method call. That is exactly how fast serializers are built: reflection only lives
+in their warm-up phase.</p>`,
+        links: [
+          { label: "MS Docs — Prepare libraries for trimming", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming" },
+          { label: "MS Docs — Source generators", url: "https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/source-generators-overview" }
+        ],
+        task: {
+          q: "A framework reads the [Route] attribute off a controller method on every single HTTP request. What is the better way?",
+          options: [
+            "Leave it as it is: GetCustomAttribute is a cheap operation",
+            "Scan the controllers once at startup and put the routes into a Dictionary",
+            "Switch off compiler optimizations so that reflection runs faster",
+            "Replace reading the attribute with Type.GetType by a name from a string"
+          ],
+          answer: 1,
+          explain: "Every GetCustomAttribute is a metadata lookup plus a brand new attribute object. You scan once at startup, and at runtime you just hit a ready-made dictionary."
+        }
+      }
+    ]
+  },
 ];
 
 // Same world order as the Russian data file.
@@ -2096,6 +3041,8 @@ const WORLD_ORDER = [
   "creational",
   "structural",
   "behavioral",
+  "assemblies",
+  "reflection",
 ];
 const orderedWorlds = WORLD_ORDER
   .map(id => WORLDS.find(w => w.id === id))
