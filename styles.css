@@ -63,7 +63,7 @@ html[data-theme="dark"] .hero h1{
 }
 /* smooth cross-fade when flipping the switch */
 body, .topbar, .world-card, .road-card, .level-row, .quiz, .link-row, .deep,
-.opt, .bar, .xp-badge, .btn-reset, .btn-theme, .lang-switch, .prose{
+.opt, .bar, .xp-badge, .btn-reset, .btn-theme, .lang-switch, .controls, .prose{
   transition:background-color .25s ease, color .25s ease, border-color .25s ease;
 }
 
@@ -155,6 +155,10 @@ a:hover{ text-decoration-color:var(--blue); }
 }
 .lang-switch button:hover{ color:var(--ink); }
 .lang-switch button[aria-pressed="true"]{ background:var(--yellow); color:var(--on); }
+
+/* language + theme + reset live together; on phones this becomes a dropdown */
+.controls{ display:flex; align-items:center; gap:var(--sp-3); }
+.btn-burger{ display:none; }
 
 /* ============ Buttons ============ */
 .btn{
@@ -500,15 +504,39 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   :root{ --fs-32:26px; --fs-24:20px; --shadow:4px 4px 0 var(--ink); }
   .wrap{ padding:var(--sp-6) var(--sp-4) 64px; }
   .topbar-inner{ padding:var(--sp-3) var(--sp-4); gap:var(--sp-2); }
-  /* logo only: the wordmark would crowd the language + theme + reset controls */
-  .brand-name{ display:none; }
+  .brand small{ display:none; }
   .world-card{ padding:var(--sp-4); }
   .lesson-nav .btn{ min-width:120px; }
-  /* Reset shrinks to a compact ↺ icon so it never crowds the top bar */
-  .btn-reset{ font-size:0; padding:10px 13px; }
-  .btn-reset::before{ content:"↺"; font-size:18px; line-height:1; font-weight:800; }
   /* keep the XP badge short on phones so it never stretches the top bar */
   .xp-count{ display:none; }
+
+  /* Burger: language + theme + reset fold into a dropdown, so the top bar
+     keeps room for the full wordmark and the XP badge. */
+  .xp-wrap{ position:relative; }
+  .btn-burger{
+    display:block;
+    background:var(--paper-2); border:var(--border); color:var(--ink);
+    padding:9px 13px; border-radius:var(--r-sm); font-size:18px; line-height:1;
+    font-weight:800; cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:transform .12s ease, box-shadow .12s ease, background .15s ease;
+  }
+  .btn-burger[aria-expanded="true"]{ background:var(--yellow); color:var(--on); }
+  .btn-burger:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--ink); }
+
+  .controls{
+    display:none;
+    position:absolute; top:calc(100% + 15px); right:0; z-index:30;
+    flex-direction:column; align-items:stretch; gap:var(--sp-2);
+    min-width:180px; padding:var(--sp-3);
+    background:var(--paper-2); border:var(--border);
+    border-radius:var(--r-md); box-shadow:var(--shadow);
+  }
+  .controls.open{ display:flex; animation:fadeUp .18s ease; }
+  /* full-size tap targets inside the menu */
+  .controls .btn-theme{ width:100%; padding:13px 14px; }
+  .controls .btn-reset{ width:100%; padding:13px 14px; font-size:var(--fs-16); }
+  .controls .lang-switch button{ flex:1; padding:13px 0; font-size:var(--fs-16); }
+
   /* on phones the "Сейчас" + count drop below the title, stacked vertically,
      so they stop crowding (and breaking up) the world name */
   .road-head{ align-items:flex-start; }

@@ -25,6 +25,7 @@
       themeAria: "Переключить тему",
       langAria: "Язык сайта",
       langTo: "Switch to English",
+      menu: "Меню настроек",
       reset: "Сброс",
       resetTitle: "Сбросить прогресс",
       resetConfirm: "Сбросить весь прогресс и XP?",
@@ -79,6 +80,7 @@
       themeAria: "Switch theme",
       langAria: "Site language",
       langTo: "Переключить на русский",
+      menu: "Settings menu",
       reset: "Reset",
       resetTitle: "Reset progress",
       resetConfirm: "Reset all progress and XP?",
@@ -609,6 +611,10 @@
         b.title = active ? t.langAria : t.langTo;
       });
     }
+    if (burgerBtn) {
+      burgerBtn.title = t.menu;
+      burgerBtn.setAttribute("aria-label", t.menu);
+    }
     paintThemeBtn();
   }
 
@@ -628,6 +634,31 @@
       const btn = e.target.closest("button[data-lang]");
       if (btn) setLang(btn.dataset.lang);
     });
+  }
+
+  /* ---------- burger menu (phones only) ---------- */
+  const burgerBtn = document.getElementById("burgerBtn");
+  const controls = document.getElementById("controls");
+  function closeMenu() {
+    if (!controls) return;
+    controls.classList.remove("open");
+    burgerBtn.setAttribute("aria-expanded", "false");
+  }
+  if (burgerBtn && controls) {
+    burgerBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = !controls.classList.contains("open");
+      controls.classList.toggle("open", open);
+      burgerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    // picking anything inside closes the menu; so does a tap outside or Escape
+    controls.addEventListener("click", (e) => {
+      if (e.target.closest("button")) closeMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (!controls.contains(e.target) && e.target !== burgerBtn) closeMenu();
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   }
 
   /* ---------- day / night theme ---------- */

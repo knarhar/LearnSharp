@@ -16,7 +16,7 @@
     try { if (localStorage.getItem("csharp-deepdive-lang") === "en")
       document.documentElement.lang = "en"; } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20" />
+  <link rel="stylesheet" href="styles.css?v=21" />
 </head>
 <body>
   <header class="topbar">
@@ -27,12 +27,16 @@
       </div>
       <div class="xp-wrap">
         <span class="xp-badge" id="xp"><b>0 XP</b></span>
-        <div class="lang-switch" id="langSwitch" role="group">
-          <button type="button" data-lang="ru" aria-pressed="true">RU</button>
-          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        <!-- on phones these three move into the burger dropdown -->
+        <button class="btn-burger" id="burgerBtn" aria-expanded="false" aria-controls="controls">☰</button>
+        <div class="controls" id="controls">
+          <div class="lang-switch" id="langSwitch" role="group">
+            <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+            <button type="button" data-lang="en" aria-pressed="false">EN</button>
+          </div>
+          <button class="btn-theme" id="themeBtn">🌙</button>
+          <button class="btn-reset" id="resetBtn">Сброс</button>
         </div>
-        <button class="btn-theme" id="themeBtn">🌙</button>
-        <button class="btn-reset" id="resetBtn">Сброс</button>
       </div>
     </div>
   </header>
@@ -41,6 +45,6 @@
 
   <script src="data.js?v=7"></script>
   <script src="data.en.js?v=1"></script>
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
