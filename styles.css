@@ -542,6 +542,10 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   .road-head{ align-items:flex-start; }
   .road-meta{ flex:1 1 100%; align-items:center;
     gap:var(--sp-2); margin-top:var(--sp-1); }
+  /* count first, then the "you are here" pill — the short chip reads better
+     next to the world title, and the long pill closes the row */
+  .road-count{ order:1; }
+  .road-tag{ order:2; }
 }
 
 /* Respect users who prefer less motion */
