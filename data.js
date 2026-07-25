@@ -2088,6 +2088,950 @@ alarm.Trigger("дым");   // Тревога: дым`,
         }
       }
     ]
+  },
+
+  /* ================= WORLD 10: REFLECTION ================= */
+  {
+    id: "reflection",
+    name: "Reflection",
+    icon: "◉",
+    blurb: "Программа читает свои же метаданные: находит типы, создаёт объекты и вызывает методы по имени.",
+    levels: [
+      {
+        id: "refl-1",
+        title: "Что такое reflection",
+        subtitle: "На каждой детали выгравирована табличка",
+        theory: `
+<p>Представь ящик с незнакомыми инструментами. На каждом выгравирована табличка: как называется,
+для чего, какие насадки подходят. Ты можешь взять инструмент, которого никогда не видел, прочитать
+табличку и сразу им пользоваться.</p>
+<p>Компилятор кладёт в сборку (DLL или EXE) не только код, но и такие таблички — <b>метаданные</b>:
+все типы, их методы, свойства, параметры, атрибуты. <b>Reflection</b> — это API, который читает эти
+таблички <i>во время выполнения</i> и умеет вызвать то, что нашёл.</p>
+<p>Разница проста. Обычный код знает имена заранее: ты пишешь <code>user.Name</code>, и компилятор
+это проверяет. Reflection узнаёт имена в рантайме — из строки, из конфига, из чужой DLL. Ты
+работаешь не с <code>User</code>, а с объектом <code>Type</code>, который <i>описывает</i>
+<code>User</code>.</p>`,
+        code: `// Обычный код: имена известны на этапе компиляции
+var user = new User();
+user.Name = "Anna";
+Console.WriteLine(user.Name);
+
+// То же самое через reflection: имена находим в рантайме
+using System.Reflection;
+
+Type type = typeof(User);
+object instance = Activator.CreateInstance(type)!;
+
+PropertyInfo? nameProp = type.GetProperty("Name");
+nameProp!.SetValue(instance, "Anna");
+Console.WriteLine(nameProp.GetValue(instance));   // Anna
+
+// Метаданные лежат в самой сборке — их можно просто листать
+Assembly asm = type.Assembly;
+Console.WriteLine(asm.FullName);`,
+        deep: `<p><b>Глубже:</b> reflection ничего не «декомпилирует» и не гадает. Она читает те же самые
+таблицы метаданных, по которым работает сама среда выполнения: CLR по ним делает JIT, проверяет
+типы и находит методы. То есть ты получаешь доступ к внутреннему справочнику .NET. Отсюда и цена:
+<code>typeof(User)</code> — это почти константа, а <code>Type.GetType(&quot;User&quot;)</code> —
+настоящий поиск по строке. И отсюда же главная опасность: trimming и Native AOT вырезают то, что
+«никто не вызывает», а вызов через строку они не видят.</p>`,
+        links: [
+          { label: "MS Docs — Reflection and attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/" },
+          { label: "MS Docs — Reflection in .NET", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection" }
+        ],
+        task: {
+          q: "Чем reflection отличается от обычного вызова метода?",
+          options: [
+            "Reflection быстрее, потому что обходит компилятор",
+            "Reflection находит типы и члены во время выполнения — по метаданным, а не по именам, вписанным в код",
+            "Reflection нужна только для работы с базами данных",
+            "Reflection выключает проверку типов во всей программе"
+          ],
+          answer: 1,
+          explain: "Reflection читает метаданные сборки в рантайме. Поэтому имя может прийти строкой из конфига — но компилятор такую строку уже не проверит."
+        }
+      },
+      {
+        id: "refl-2",
+        title: "Type и сборка",
+        subtitle: "Type — это паспорт типа",
+        theory: `
+<p><code>Type</code> — паспорт. В нём написано всё про тип: имя, класс он или структура, кто его
+родитель, какие интерфейсы реализует. Сам объект — это человек, а <code>Type</code> — документ
+о нём.</p>
+<p>Паспорт можно получить тремя способами:</p>
+<ul>
+<li><code>typeof(User)</code> — тип известен на этапе компиляции. Самый быстрый и безопасный путь.</li>
+<li><code>obj.GetType()</code> — спросить у существующего объекта, кто он на самом деле.</li>
+<li><code>Type.GetType(&quot;имя&quot;)</code> — имя пришло строкой в рантайме. Легко ошибиться:
+вернётся <code>null</code>, а не исключение.</li>
+</ul>
+<p><b>Assembly</b> — это сама коробка, то есть загруженная DLL или EXE. У неё есть
+<code>GetTypes()</code>: список всех типов внутри. С этого начинается любой сканер — плагины,
+DI-контейнеры, тесты.</p>`,
+        code: `using System.Reflection;
+
+// 1) Тип известен на этапе компиляции
+Type t1 = typeof(string);
+Type t2 = typeof(List<>);        // открытый generic: T ещё не задан
+Type t3 = typeof(List<int>);     // закрытый generic
+
+// 2) Тип берём у существующего объекта
+object value = "hello";
+Type t4 = value.GetType();       // System.String
+
+// 3) Тип из строки — имя приходит в рантайме
+Type? t5 = Type.GetType("System.Int32");
+Type? t6 = Type.GetType("Acme.Shop.Order, Acme.Shop");  // и имя сборки тоже
+
+// Осмотр всей сборки целиком
+Assembly asm = typeof(Program).Assembly;
+Console.WriteLine(asm.FullName);
+
+foreach (Type type in asm.GetTypes())
+{
+    if (!type.IsClass || type.IsAbstract) continue;
+    Console.WriteLine(type.FullName + "  base=" + type.BaseType?.Name);
+}`,
+        deep: `<p><b>Глубже:</b> <code>Type.GetType(&quot;Acme.Shop.Order&quot;)</code> ищет тип
+только в двух местах: в сборке, откуда ты вызываешь, и в системной библиотеке. Чужую DLL он сам
+не подгрузит — поэтому нужно <i>assembly-qualified</i> имя вида
+<code>&quot;Acme.Shop.Order, Acme.Shop&quot;</code>. Второй капкан: <code>typeof(List&lt;&gt;)</code>
+даёт «открытый» тип, у него <code>IsGenericTypeDefinition == true</code>, и создать из него объект
+нельзя. Сначала закрой его: <code>MakeGenericType(typeof(int))</code>.</p>`,
+        links: [
+          { label: "MS Docs — Type", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type" },
+          { label: "MS Docs — Type.GetType", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.gettype" }
+        ],
+        task: {
+          q: "Имя типа приходит из конфига: «Acme.Shop.Order». Type.GetType вернул null, хотя класс точно существует. Самая вероятная причина?",
+          options: [
+            "Type.GetType работает только со значимыми типами",
+            "Имя не assembly-qualified, а нужную сборку GetType сам не ищет",
+            "Надо было написать typeof вместо Type.GetType",
+            "Для публичных классов GetType всегда возвращает null"
+          ],
+          answer: 1,
+          explain: "GetType смотрит в вызывающую сборку и в системную библиотеку. Для чужой DLL нужно имя вида «Acme.Shop.Order, Acme.Shop» — иначе тихий null."
+        }
+      },
+      {
+        id: "refl-3",
+        title: "Члены типа: свойства и методы",
+        subtitle: "Список кнопок на незнакомом пульте",
+        theory: `
+<p>Ты нашёл пульт без подписи. Reflection даёт список всех его кнопок: как называется каждая, что
+она принимает, можно ли её нажать. И позволяет нажать.</p>
+<p>Кнопки описываются классами-«инфошками»: <code>PropertyInfo</code> (свойство,
+<code>GetValue</code> / <code>SetValue</code>), <code>MethodInfo</code> (метод,
+<code>Invoke</code>), <code>FieldInfo</code> (поле), <code>ConstructorInfo</code> (конструктор).
+У всех общий родитель — <code>MemberInfo</code>.</p>
+<p>Важная деталь: <code>GetMethod</code> и <code>GetProperty</code> по умолчанию видят только
+<b>public</b> и <b>нестатические</b> члены. Приватный метод вернёт <code>null</code>, пока ты не
+попросишь явно через <code>BindingFlags.Instance | BindingFlags.NonPublic</code>. Да, reflection
+умеет вызывать private — это спасает фреймворки и тесты, но ломает инкапсуляцию.</p>`,
+        code: `using System.Reflection;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; private set; }
+    public void ApplyDiscount(decimal percent) => Price *= 1 - percent;
+    private void Touch() { }
+}
+
+Type type = typeof(Product);
+object product = Activator.CreateInstance(type)!;
+
+// Свойство: читаем и пишем
+PropertyInfo name = type.GetProperty("Name")!;
+name.SetValue(product, "Tea");
+Console.WriteLine(name.GetValue(product));       // Tea
+
+// Метод: вызываем, аргументы передаём массивом object
+MethodInfo apply = type.GetMethod("ApplyDiscount")!;
+apply.Invoke(product, new object[] { 0.10m });   // минус 10%
+
+// Приватное — только если попросить BindingFlags
+MethodInfo? touch = type.GetMethod("Touch",
+    BindingFlags.Instance | BindingFlags.NonPublic);
+touch?.Invoke(product, null);`,
+        deep: `<p><b>Глубже:</b> у <code>Invoke</code> подпись
+<code>object Invoke(object, object[])</code> — значит каждый <code>int</code> и
+<code>decimal</code> по пути упаковывается в <code>object</code> (<i>boxing</i>), а результат
+приходится приводить обратно. И ещё: если метод внутри бросит исключение, ты поймаешь не его, а
+<code>TargetInvocationException</code> — настоящая причина спрятана в
+<code>InnerException</code>. Отладчики и логи на этом регулярно путают людей.</p>`,
+        links: [
+          { label: "MS Docs — PropertyInfo", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.propertyinfo" },
+          { label: "MS Docs — BindingFlags", url: "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.bindingflags" }
+        ],
+        task: {
+          kind: "write",
+          q: "Есть Type type и объект product. Прочитай через reflection значение публичного свойства «Name»: сначала получи PropertyInfo, потом возьми значение.",
+          placeholder: "две строки C#...",
+          must: ["getproperty", "getvalue"],
+          solution: "var prop = type.GetProperty(nameof(Product.Name));\nobject? value = prop.GetValue(product);",
+          explain: "GetProperty находит описание свойства по имени, GetValue читает значение у конкретного экземпляра. nameof лучше строки: при переименовании сломается компиляция, а не рантайм."
+        }
+      },
+      {
+        id: "refl-4",
+        title: "Создание объектов: Activator",
+        subtitle: "3D-принтер: даёшь чертёж — получаешь вещь",
+        theory: `
+<p><code>Activator.CreateInstance(type)</code> — это 3D-принтер. Ты не пишешь <code>new</code>,
+ты подаёшь чертёж (объект <code>Type</code>) и получаешь готовый предмет. Чертёж мог прийти из
+конфига или из чужой DLL — принтеру всё равно.</p>
+<p>Варианты: без аргументов, с аргументами конструктора, или напрямую через
+<code>ConstructorInfo.Invoke</code>. Для дженериков сначала закрываешь тип
+<code>MakeGenericType</code>, иначе создавать нечего.</p>
+<p>Вот зачем это нужно на практике. Соедини «создать объект» и «пройти по свойствам» — и получится
+<b>маппер</b>: копирование одноимённых свойств из одного объекта в другой. Именно так, только
+намного оптимизированнее, работают сериализаторы, ORM и AutoMapper.</p>`,
+        code: `using System.Reflection;
+
+// Пустой конструктор
+object? a = Activator.CreateInstance(typeof(Product));
+
+// Конструктор с аргументами
+object? b = Activator.CreateInstance(typeof(List<int>), new object[] { 16 });
+
+// Открытый generic нужно сначала «закрыть»
+Type closed = typeof(List<>).MakeGenericType(typeof(string));
+object list = Activator.CreateInstance(closed)!;      // List<string>
+
+// Практика: копируем одноимённые свойства source -> target
+static void CopyProperties(object source, object target)
+{
+    Type srcType = source.GetType();
+    Type dstType = target.GetType();
+
+    foreach (PropertyInfo src in srcType.GetProperties())
+    {
+        if (!src.CanRead) continue;
+
+        PropertyInfo? dst = dstType.GetProperty(src.Name);
+        if (dst is null || !dst.CanWrite) continue;
+
+        // типы должны быть совместимы, иначе SetValue упадёт
+        if (!dst.PropertyType.IsAssignableFrom(src.PropertyType)) continue;
+
+        dst.SetValue(target, src.GetValue(source));
+    }
+}`,
+        deep: `<p><b>Глубже:</b> <code>Activator.CreateInstance</code> каждый вызов заново ищет
+конструктор и проверяет аргументы. Для горячего кода это чинят так: один раз находят
+<code>ConstructorInfo</code> и <b>компилируют</b> из него делегат —
+<code>Expression.Lambda&lt;Func&lt;object&gt;&gt;(Expression.New(ctor)).Compile()</code>. Дальше
+создание объекта стоит почти как обычный <code>new</code>. Reflection здесь работает один раз, на
+старте; в рантайме её уже нет. Плюс мелочь: у структур пустой конструктор искать не надо —
+<code>CreateInstance</code> просто вернёт значение по умолчанию.</p>`,
+        links: [
+          { label: "MS Docs — Activator.CreateInstance", url: "https://learn.microsoft.com/en-us/dotnet/api/system.activator.createinstance" },
+          { label: "MS Docs — Reflection and generic types", url: "https://learn.microsoft.com/en-us/dotnet/fundamentals/reflection/reflection-and-generic-types" }
+        ],
+        task: {
+          kind: "write",
+          q: "В переменной Type t лежит тип с пустым конструктором. Создай его экземпляр во время выполнения — одна строка.",
+          placeholder: "одна строка C#...",
+          must: ["activator.createinstance"],
+          solution: "object? obj = Activator.CreateInstance(t);",
+          explain: "Activator.CreateInstance(t) находит конструктор без параметров и вызывает его. Результат — object, поэтому дальше его приводят к интерфейсу или базовому типу."
+        }
+      },
+      {
+        id: "refl-5",
+        title: "Атрибуты и Reflection",
+        subtitle: "Наклейки на коробках при переезде",
+        theory: `
+<p>При переезде ты клеишь на коробки стикеры: «хрупкое», «на кухню». Сами стикеры ничего не делают.
+Они работают только потому, что грузчик их <i>читает</i>.</p>
+<p><b>Атрибут</b> — такой же стикер, только на классе или методе. Он попадает в метаданные и лежит
+там молча. Reflection — это грузчик: <code>GetCustomAttribute&lt;T&gt;()</code> достаёт стикер и
+даёт по нему решение.</p>
+<p>Вся эта магия построена на одной паре: пометил в исходнике — прочитал в рантайме. Так работают
+маршруты ASP.NET (<code>[HttpGet]</code>), валидация (<code>[Required]</code>), сериализация
+(<code>[JsonPropertyName]</code>) и любые твои собственные метки. Атрибут описывается обычным
+классом, унаследованным от <code>Attribute</code>.</p>`,
+        code: `using System.Reflection;
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class RouteAttribute : Attribute
+{
+    public string Template { get; }
+    public RouteAttribute(string template) => Template = template;
+}
+
+[Route("api/products")]
+public class ProductsController
+{
+    [Route("")]
+    public void List() { }
+
+    [Route("{id}")]
+    public void GetById(int id) { }
+}
+
+// Читаем стикеры в рантайме
+Type type = typeof(ProductsController);
+RouteAttribute? onType = type.GetCustomAttribute<RouteAttribute>();
+Console.WriteLine(onType?.Template);          // api/products
+
+foreach (MethodInfo m in type.GetMethods(BindingFlags.Public
+        | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+{
+    RouteAttribute? route = m.GetCustomAttribute<RouteAttribute>();
+    if (route is null) continue;
+    Console.WriteLine(m.Name + " -> " + route.Template);
+}`,
+        deep: `<p><b>Глубже:</b> экземпляра атрибута в памяти не существует, пока ты его не
+запросил. В метаданных лежат только <i>аргументы</i> — как константы. Каждый вызов
+<code>GetCustomAttribute&lt;T&gt;()</code> создаёт <b>новый</b> объект атрибута. Отсюда два
+следствия: хранить в атрибуте изменяемое состояние бессмысленно (в следующий раз получишь чистый
+экземпляр), а аргументы атрибута обязаны быть константами времени компиляции — вычислить их в
+конструкторе нельзя.</p>`,
+        links: [
+          { label: "MS Docs — Creating custom attributes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/creating-custom-attributes" },
+          { label: "MS Docs — Accessing attributes by using reflection", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/accessing-attributes-by-using-reflection" }
+        ],
+        task: {
+          q: "Что делает атрибут [Route(«api/products»)] сам по себе, если reflection его не читает?",
+          options: [
+            "Регистрирует маршрут в веб-сервере автоматически",
+            "Ничего — это просто метка в метаданных, пока кто-то её не прочитает",
+            "Переименовывает метод в api/products",
+            "Проверяется компилятором и сам вызывает метод при запросе"
+          ],
+          answer: 1,
+          explain: "Атрибут — данные, а не поведение. Работает он только потому, что фреймворк проходит reflection по типам и читает эти метки."
+        }
+      },
+      {
+        id: "refl-6",
+        title: "Плагины и scan-and-register",
+        subtitle: "Ищем всех, кто умеет нужное",
+        theory: `
+<p>Ты вешаешь объявление: «нужны все, кто умеет играть на гитаре». Имён ты не знаешь — знаешь
+только умение. Кто откликнется, того и берёшь.</p>
+<p>В .NET «умение» — это интерфейс. Reflection берёт сборку, перебирает
+<code>GetTypes()</code>, отбрасывает абстрактные и интерфейсы, а остальных проверяет вопросом
+<code>typeof(IPlugin).IsAssignableFrom(type)</code> — «можно ли положить этот тип в переменную
+<code>IPlugin</code>?». Подошёл — создаём через <code>Activator</code>.</p>
+<p>Тот же приём даёт <b>scan-and-register</b> для DI: находим все классы по соглашению
+(<code>OrderService</code> реализует <code>IOrderService</code>) и регистрируем их одним циклом,
+вместо сотни строк вручную. Правило одно: сканируй <i>один раз при старте</i>, а не на каждый
+запрос.</p>`,
+        code: `using System.Reflection;
+
+public interface IPlugin
+{
+    string Name { get; }
+    void Execute();
+}
+
+public static class PluginScanner
+{
+    public static IEnumerable<IPlugin> Load(Assembly assembly)
+    {
+        foreach (Type type in assembly.GetTypes())
+        {
+            // сам интерфейс и абстрактные классы создать нельзя
+            if (type.IsInterface || type.IsAbstract) continue;
+
+            // «влезает ли type в переменную IPlugin?»
+            if (!typeof(IPlugin).IsAssignableFrom(type)) continue;
+
+            if (Activator.CreateInstance(type) is IPlugin plugin)
+                yield return plugin;
+        }
+    }
+}
+
+// Своя сборка или чужая DLL — код один и тот же
+Assembly asm = Assembly.LoadFrom("plugins/SamplePlugin.dll");
+foreach (IPlugin p in PluginScanner.Load(asm))
+    p.Execute();`,
+        deep: `<p><b>Глубже:</b> порядок в <code>IsAssignableFrom</code> путают почти все. Читай его
+как «слева можно присвоить справа»: <code>typeof(IPlugin).IsAssignableFrom(impl)</code>. Наоборот —
+почти всегда <code>false</code>. Второй подводный камень: <code>GetTypes()</code> у чужой DLL может
+бросить <code>ReflectionTypeLoadException</code>, если часть зависимостей не нашлась — у этого
+исключения есть свойство <code>Types</code> с уже загруженными типами, так что сканер можно
+продолжить. И третий: одна и та же DLL, загруженная в два разных
+<code>AssemblyLoadContext</code>, даёт <b>разные</b> объекты <code>Type</code>, и проверка на
+интерфейс внезапно вернёт <code>false</code>.</p>`,
+        links: [
+          { label: "MS Docs — Create an app with plugin support", url: "https://learn.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support" },
+          { label: "MS Docs — Type.IsAssignableFrom", url: "https://learn.microsoft.com/en-us/dotnet/api/system.type.isassignablefrom" }
+        ],
+        task: {
+          q: "Почему в сканере плагинов пишут typeof(IPlugin).IsAssignableFrom(type), а не type.IsAssignableFrom(typeof(IPlugin))?",
+          options: [
+            "Порядок не важен, оба варианта дают одно и то же",
+            "Метод читается как «слева можно присвоить справа», значит интерфейс должен быть слева",
+            "Наоборот нельзя: у интерфейсов нет объекта Type",
+            "Так требует Activator.CreateInstance"
+          ],
+          answer: 1,
+          explain: "IsAssignableFrom отвечает на вопрос «влезет ли значение правого типа в переменную левого». Плагин присваивают переменной IPlugin, поэтому интерфейс слева."
+        }
+      },
+      {
+        id: "refl-7",
+        title: "Цена reflection и альтернативы",
+        subtitle: "Каждый раз спрашивать дорогу — долго",
+        theory: `
+<p>Можно каждый раз искать номер в толстом справочнике. А можно один раз найти и сохранить в
+контакты. Reflection — это справочник: поиск по метаданным, проверки, упаковка аргументов в
+<code>object</code>. Прямой вызов <code>product.Name</code> — это контакт.</p>
+<p>Отсюда одно железное правило: <b>отражай один раз при старте</b>, складывай результат в
+<code>Dictionary&lt;string, PropertyInfo&gt;</code> и дальше работай с ним. Никогда не вызывай
+<code>GetProperty</code>, <code>GetMethod</code> или <code>GetCustomAttribute</code> внутри
+горячего цикла без кеша — это самый частый источник тормозов во «своих фреймворках».</p>
+<p>А часто reflection просто не нужна. Проверь альтернативы:</p>
+<ul>
+<li>Типы известны заранее — <b>интерфейс</b> или дженерик.</li>
+<li>Нужен JSON — <code>System.Text.Json</code>, а для скорости его source generation.</li>
+<li>Вызов в горячем пути — <b>делегат</b>, построенный один раз.</li>
+<li>Нужен код «по метке» на компиляции — <b>source generators</b>: они пишут обычный C#, который
+переживает trimming и Native AOT.</li>
+</ul>`,
+        code: `using System.Reflection;
+
+static class PropCache<T>
+{
+    private static readonly Dictionary<string, PropertyInfo?> Cache = new();
+
+    public static PropertyInfo? Get(string name)
+    {
+        if (Cache.TryGetValue(name, out PropertyInfo? prop)) return prop;
+        prop = typeof(T).GetProperty(name);   // поиск по метаданным — один раз
+        Cache[name] = prop;
+        return prop;
+    }
+}
+
+static void PrintNames(List<Product> products)
+{
+    // Плохо: GetProperty повторяется на каждом элементе
+    // foreach (Product p in products)
+    //     Console.WriteLine(typeof(Product).GetProperty("Name")!.GetValue(p));
+
+    // Нормально: нашли один раз, дальше только чтение
+    PropertyInfo? prop = PropCache<Product>.Get("Name");
+    foreach (Product p in products)
+        Console.WriteLine(prop?.GetValue(p));
+
+    // Быстро: reflection один раз превращаем в делегат
+    var getName = typeof(Product).GetProperty("Name")!.GetMethod!
+        .CreateDelegate<Func<Product, string>>();
+    foreach (Product p in products)
+        Console.WriteLine(getName(p));       // почти как обычный вызов
+}`,
+        deep: `<p><b>Глубже:</b> кеширование <code>PropertyInfo</code> убирает только <i>поиск</i>.
+Сам <code>GetValue</code> всё равно идёт через проверки доступа и упаковывает результат в
+<code>object</code>. Настоящий скачок даёт превращение найденного члена в типизированный делегат
+(<code>CreateDelegate&lt;Func&lt;Product, string&gt;&gt;()</code> или скомпилированное
+<code>Expression</code>): после этого вызов почти не отличается от прямого, потому что JIT видит
+обычный вызов метода. Именно так устроены быстрые сериализаторы: reflection у них живёт только на
+этапе «прогрева».</p>`,
+        links: [
+          { label: "MS Docs — Prepare libraries for trimming", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming" },
+          { label: "MS Docs — Source generators", url: "https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/source-generators-overview" }
+        ],
+        task: {
+          q: "Фреймворк на каждый HTTP-запрос читает атрибут [Route] у метода контроллера. Что правильнее?",
+          options: [
+            "Оставить как есть: GetCustomAttribute — дешёвая операция",
+            "Просканировать контроллеры один раз при старте и сложить маршруты в Dictionary",
+            "Отключить оптимизации компилятора, чтобы reflection работала быстрее",
+            "Заменить чтение атрибута на Type.GetType по имени из строки"
+          ],
+          answer: 1,
+          explain: "Каждый GetCustomAttribute — это поиск по метаданным плюс новый объект атрибута. Сканируют один раз на старте, а в рантайме бьют по готовому словарю."
+        }
+      }
+    ]
+  },
+
+  /* ================= WORLD 11: NAMESPACES / ASSEMBLIES / NUGET ================= */
+  {
+    id: "assemblies",
+    name: "Namespaces, сборки и NuGet",
+    icon: "▦",
+    blurb: "Как код получает адреса, превращается в DLL с паспортом и приезжает пакетами из NuGet.",
+    levels: [
+      {
+        id: "asm-1",
+        title: "Namespace — адрес типа",
+        subtitle: "Город, улица, дом — чтобы имена не путались",
+        theory: `
+<p>В большом городе живут сотни Ани. Различают их по адресу: «Аня с улицы Абовяна» и «Аня
+с проспекта Маштоца». <b>namespace</b> — это ровно такой адрес для типов. Полное имя типа —
+это его адрес: <code>Acme.Shop.Order</code> и <code>Contoso.Crm.Order</code> — два разных
+класса, хотя короткое имя у них одинаковое.</p>
+<p>Важно понять, чего namespace <i>не</i> делает: он не создаёт файл, не создаёт папку и не
+равен сборке. Он только группирует имена. Совпадение «папка = namespace» — это удобная
+договорённость людей, а не правило компилятора.</p>
+<p>Писать полные адреса каждый раз больно, поэтому есть <code>using</code>:</p>
+<ul>
+<li><code>using System.IO;</code> — «типы отсюда зови коротким именем».</li>
+<li><code>using Json = System.Text.Json;</code> — псевдоним (alias), спасает при конфликте имён.</li>
+<li><code>using static System.Math;</code> — тянет статические члены: вместо <code>Math.PI</code>
+просто <code>PI</code>.</li>
+<li><code>global using System;</code> — импорт сразу на весь проект, обычно в одном файле
+<code>GlobalUsings.cs</code>.</li>
+</ul>
+<p>А свойство <code>ImplicitUsings</code> в проекте — это когда SDK сам дописывает пачку
+<code>global using</code> за тебя (в сгенерированный файл под <code>obj/</code>). Поэтому в
+новом проекте <code>Console.WriteLine</code> работает без единой строки <code>using</code>.</p>`,
+        code: `// namespace = адрес, а не файл и не папка
+namespace Acme.Shop.Orders;   // file-scoped форма, C# 10+
+
+public class Order { }
+
+// ---------- другой файл ----------
+using System;
+using Acme.Shop.Orders;
+
+// два разных Order — разводим псевдонимами
+using ShopOrder = Acme.Shop.Order;
+using CrmOrder  = Contoso.Crm.Order;
+
+// статические члены без имени типа: Math.PI -> PI
+using static System.Math;
+
+// ---------- GlobalUsings.cs: импорт на весь проект ----------
+global using System.Linq;
+global using System.Collections.Generic;
+
+// полное имя работает всегда, даже без using
+var direct = new Acme.Shop.Orders.Order();
+double area = Round(PI * Pow(2, 2), 2);   // это из using static`,
+        deep: `<p><b>Глубже:</b> одна сборка легко держит много namespace — и наоборот, один
+namespace технически может быть размазан по нескольким сборкам (так делают редко, потому что
+потом непонятно, какую DLL подключать). А ещё переименование namespace — это <b>ломающее
+изменение</b> для всех, кто твою библиотеку уже использует: их <code>using</code> перестанет
+компилироваться. Поэтому адрес выбирают один раз и надолго.</p>`,
+        links: [
+          { label: "MS Learn — namespace", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/namespace" },
+          { label: "MS Learn — using directive (alias, static, global)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive" }
+        ],
+        task: {
+          kind: "write",
+          q: "Ты не хочешь писать using System.Linq; в каждом файле проекта. Напиши одну директиву, которая импортирует этот namespace во ВСЕ файлы проекта.",
+          placeholder: "директива...",
+          must: ["globalusing", "system.linq"],
+          solution: "global using System.Linq;",
+          explain: "global using действует на весь проект. Обычно такие строки складывают в один файл GlobalUsings.cs, чтобы их было легко найти."
+        }
+      },
+      {
+        id: "asm-2",
+        title: "Сборка и её manifest",
+        subtitle: "Что лежит внутри DLL, кроме кода",
+        theory: `
+<p>Представь посылку. Внутри — товар, а снаружи наклейка: от кого, что внутри, что ещё нужно
+доложить. <b>Assembly</b> (сборка) — это такая посылка с кодом. Обычно это один файл
+<code>.dll</code> (библиотека) или исполняемый выход приложения. Сборка — минимальная единица,
+которую ты <i>поставляешь</i>, <i>версионируешь</i> и на которую ссылаешься.</p>
+<p>Внутри сборки четыре вещи:</p>
+<ul>
+<li><b>IL</b> (Intermediate Language) — скомпилированный код, ещё не машинный.</li>
+<li><b>Metadata</b> — описание типов, методов, полей, подписей.</li>
+<li><b>Manifest</b> — наклейка на посылке: имя, версия, culture, ключ, список нужных сборок.</li>
+<li><b>Resources</b> — необязательное: строки, картинки, встроенные файлы.</li>
+</ul>
+<p>Manifest — это не отдельный файлик, который ты правишь руками. Компилятор встраивает его в
+ту же DLL. Именно по манифесту рантайм понимает, что загрузил, и что ещё надо подтянуть.</p>
+<p>Ещё одна вещь, которую путают: <code>internal</code> — это граница <i>сборки</i>, а не
+namespace. Снаружи DLL видно только <code>public</code>.</p>`,
+        code: `// Внутри Acme.Shop.dll:
+//   Manifest   — «кто я» + «что мне нужно»
+//   Metadata   — типы, методы, поля
+//   IL         — сам код
+//   Resources  — необязательные строки и картинки
+
+using System.Reflection;
+
+Assembly asm = Assembly.GetExecutingAssembly();
+
+Console.WriteLine(asm.FullName);
+// Acme.Shop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+
+Console.WriteLine(asm.GetName().Name);     // Acme.Shop
+Console.WriteLine(asm.GetName().Version);  // 1.0.0.0
+
+// список зависимостей — тоже строки из манифеста
+foreach (AssemblyName dep in asm.GetReferencedAssemblies())
+    Console.WriteLine(dep.Name + " " + dep.Version);
+
+public class VisibleOutsideAssembly { }   // видно тем, кто подключил DLL
+internal class OnlyInsideThisAssembly { } // видно только внутри этой сборки`,
+        deep: `<p><b>Глубже:</b> исторически сборка могла состоять из нескольких файлов —
+<i>модулей</i> (<code>.netmodule</code>). Манифест лежал только в одном из них, а остальные
+просто принадлежали той же identity: снаружи это по-прежнему <b>одна</b> сборка, и
+<code>internal</code> был общим для всех её модулей. Так собирали «C# плюс VB в одной сборке»
+и грузили части по требованию. Сегодня <code>dotnet build</code> делает один проект → одна
+сборка → один файл, и модули ты встретишь только в старых документах.</p>`,
+        links: [
+          { label: "MS Learn — Assemblies in .NET", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/" },
+          { label: "MS Learn — Assembly manifest", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/manifest" }
+        ],
+        task: {
+          q: "Какая часть сборки описывает саму сборку — её имя, версию и список нужных зависимостей?",
+          options: [
+            "IL — скомпилированный код методов",
+            "Manifest",
+            "Resources — встроенные строки и картинки",
+            "Metadata о типах и подписях методов"
+          ],
+          answer: 1,
+          explain: "Manifest — это «удостоверение и накладная» сборки: identity плюс перечень зависимостей. Metadata описывает типы, IL — код, resources — данные."
+        }
+      },
+      {
+        id: "asm-3",
+        title: "Identity и версии",
+        subtitle: "Имя файла — это ещё не паспорт",
+        theory: `
+<p>Двух людей с именем «Иванов» не путают, потому что у каждого паспорт: фамилия, дата
+рождения, номер. У сборки то же самое. Её <b>identity</b> — это четыре поля:
+<code>simple name</code>, <code>version</code>, <code>culture</code> и
+<code>public key token</code>. Две DLL с одинаковым именем файла <code>Utils.dll</code> для
+рантайма — разные сборки, если хоть одно поле отличается.</p>
+<p>Версия пишется как <code>Major.Minor.Build.Revision</code>. Major — ломающие изменения,
+Minor — новые возможности без поломок, Build — исправления, Revision — счётчик сборок.</p>
+<p>В проекте живут сразу несколько «версий», и это разные вещи:</p>
+<ul>
+<li><code>AssemblyVersion</code> — часть identity, по ней исторически шло связывание (binding).</li>
+<li><code>FileVersion</code> — только свойства файла в Windows, на загрузку не влияет.</li>
+<li><code>InformationalVersion</code> — для людей и логов, можно дописать хеш коммита.</li>
+<li><code>Version</code> — версия NuGet-пакета по SemVer.</li>
+</ul>
+<p><b>Strong name</b> — это подпись сборки парой ключей. В identity появляется
+<code>PublicKeyToken</code> — короткий хеш публичного ключа. Он доказывает происхождение и
+целостность файла, но <i>не</i> делает код безопасным сам по себе.</p>`,
+        code: `<!-- Acme.Billing.csproj -->
+<PropertyGroup>
+  <!-- версия NuGet-пакета (SemVer) -->
+  <Version>2.4.1</Version>
+
+  <!-- часть identity сборки: по ней шло binding -->
+  <AssemblyVersion>2.4.1.0</AssemblyVersion>
+
+  <!-- только свойства файла в проводнике Windows -->
+  <FileVersion>2.4.1.1234</FileVersion>
+
+  <!-- для людей и логов: можно дописать коммит -->
+  <InformationalVersion>2.4.1+git.abc123</InformationalVersion>
+
+  <!-- strong name: подпись ключом (раньше требовалась для GAC) -->
+  <SignAssembly>true</SignAssembly>
+  <AssemblyOriginatorKeyFile>acme.snk</AssemblyOriginatorKeyFile>
+</PropertyGroup>
+
+<!-- Полная identity читается так:
+
+Acme.Billing, Version=2.4.1.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+ ^simple name          ^version         ^culture             ^хеш публичного ключа
+
+Culture=neutral — обычная сборка; culture вроде hy-AM бывает
+у satellite-сборок с переводами.                                        -->`,
+        deep: `<p><b>Глубже:</b> ломать версию бывает полезно, а бывает больно. Если ты каждый
+патч поднимаешь <code>AssemblyVersion</code>, то на .NET Framework все, кто был скомпилирован
+против прежней версии, просят её по точному номеру — и без redirect падают. Поэтому многие
+библиотеки держат <code>AssemblyVersion</code> «грубым» (например <code>2.0.0.0</code> на всю
+major-линейку), а точную сборку показывают через <code>FileVersion</code> и
+<code>InformationalVersion</code>. В современном .NET версию выбирают на этапе restore, так что
+проблема мягче — но привычка осталась.</p>`,
+        links: [
+          { label: "MS Learn — Assembly names (identity)", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/identify" },
+          { label: "MS Learn — Strong-named assemblies", url: "https://learn.microsoft.com/en-us/dotnet/standard/assembly/strong-named" }
+        ],
+        task: {
+          q: "На диске две DLL, обе называются Utils.dll. Что делает их разными сборками с точки зрения рантайма?",
+          options: [
+            "Разный размер файла",
+            "Разные дата и время создания",
+            "Отличия в identity: version, culture или public key token",
+            "То, что они лежат в разных папках"
+          ],
+          answer: 2,
+          explain: "Имя файла — для людей. Identity — это simple name + version + culture + public key token; отличие в любом из этих полей означает другую сборку."
+        }
+      },
+      {
+        id: "asm-4",
+        title: "Private, shared и «DLL Hell»",
+        subtitle: "Своя копия в рюкзаке против общего склада",
+        theory: `
+<p>Два варианта жизни с инструментом. Первый: у каждого своя отвёртка в рюкзаке — тяжелее,
+зато никто ни у кого её не забирает. Второй: одна отвёртка на общем складе — экономно, но если
+кто-то заменит её на другую модель, сломается работа у всех. Это ровно <b>private</b> и
+<b>shared</b> сборки.</p>
+<p><b>Private assembly</b> лежит в папке приложения, рядом с ним. Два приложения на одной
+машине спокойно используют разные версии одной библиотеки — у каждого своя копия. Это
+поведение по умолчанию во всём современном .NET.</p>
+<p><b>Shared assembly</b> — одна установленная копия для многих приложений. На .NET Framework
+это был <b>GAC</b> (Global Assembly Cache): он умел держать версии side-by-side, но требовал
+strong name, отдельной установки и политик обновления. Именно вокруг этого выросло название
+<b>DLL Hell</b>: обновил общую библиотеку — и неизвестно, какое приложение сломалось.</p>
+<p>В .NET Core и дальше классического GAC нет. «Общее» сегодня — это NuGet-кэш, shared
+framework от рантайма и, при желании, один список версий на весь репозиторий. Правило:
+<i>по умолчанию private, делимся через пакеты</i>.</p>`,
+        code: `# Современно: приватные копии рядом с приложением
+dotnet publish -c Release
+
+# MyApp/
+#   MyApp.dll
+#   Acme.Billing.dll            <- своя копия версии 2.0
+#   Acme.Shared.dll
+#   MyApp.deps.json             <- граф зависимостей, решённый заранее
+#   MyApp.runtimeconfig.json    <- настройки рантайма
+
+# Другое приложение на той же машине:
+# OtherApp/
+#   Acme.Billing.dll            <- версия 1.0, и никто никому не мешает
+
+# ------------------------------------------------------------------
+# Классика .NET Framework: общий склад GAC
+# GAC
+#  |-- Acme.Billing 1.0.0.0     <- side-by-side версии
+#  |-- Acme.Billing 2.0.0.0
+# Требовал strong name и установки в систему.
+# ------------------------------------------------------------------
+
+<!-- Латка для конфликта версий в app.config (.NET Framework) -->
+<dependentAssembly>
+  <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" />
+  <bindingRedirect oldVersion="0.0.0.0-13.0.0.0" newVersion="13.0.0.0" />
+</dependentAssembly>
+<!-- «кто просит до 13.0.0.0 — получит 13.0.0.0» -->`,
+        deep: `<p><b>Глубже:</b> <code>bindingRedirect</code> лечит только <i>несовпадение
+номеров</i>, а не несовместимость API. Если библиотека A вызывает метод, который в версии 13.0
+удалили, redirect честно подсунет 13.0 — и приложение упадёт уже во время работы, с
+<code>MissingMethodException</code>. Поэтому современный подход другой: конфликт решают
+<b>до запуска</b>, на этапе restore, выбирая одну версию для всех. Компиляция говорит «меня
+собрали против 1.2», restore говорит «поедет 2.0», рантайм просто грузит то, что положили
+рядом.</p>`,
+        links: [
+          { label: "MS Learn — Global Assembly Cache", url: "https://learn.microsoft.com/en-us/dotnet/framework/app-domains/gac" },
+          { label: "MS Learn — .NET application publishing", url: "https://learn.microsoft.com/en-us/dotnet/core/deploying/" }
+        ],
+        task: {
+          q: "Почему в современном .NET по умолчанию не используют общее системное хранилище сборок вроде GAC?",
+          options: [
+            "GAC работает только на Linux, а .NET кроссплатформенный",
+            "Приватные копии рядом с приложением дают каждому приложению свою версию, поэтому обновление одного не ломает остальные",
+            "GAC требует NuGet, а NuGet появился позже",
+            "Из общего хранилища сборки загружаются медленнее, поэтому от него отказались"
+          ],
+          answer: 1,
+          explain: "Изоляция важнее экономии места. Своя копия в папке приложения означает, что версии не конфликтуют между приложениями — это и есть выход из «DLL Hell»."
+        }
+      },
+      {
+        id: "asm-5",
+        title: "Библиотеки классов и TFM",
+        subtitle: ".NET Standard — это спецификация розетки",
+        theory: `
+<p><b>Class library</b> — проект без точки входа, который компилируется в DLL, чтобы код можно
+было переиспользовать. Доменные модели, контракты, хелперы — всё это обычно живёт в
+библиотеках, а приложение (API, worker) их подключает.</p>
+<p><b>TFM</b> (Target Framework Moniker) — строчка вроде <code>net8.0</code> в проекте. Она
+отвечает на два вопроса: какие API доступны при компиляции и кто сможет использовать
+результат.</p>
+<p>Дальше самое путаемое место. <b>.NET Standard</b> — это <i>спецификация</i>, список API, а
+не платформа: приложения на нём не запускаются. Это как стандарт розетки — он описывает форму,
+но сам не даёт электричество. <b>Современный .NET</b> (<code>net8.0</code>) — наоборот,
+реальная платформа: рантайм, SDK, библиотеки; это конкретная розетка в стене, которая работает.</p>
+<p>Практика простая: если библиотеку должны подключать старые приложения на .NET Framework —
+берёшь <code>netstandard2.0</code>. Если все потребители на современном .NET — сразу
+<code>net8.0</code>. Нужно и то и то — multi-targeting. И выбирай TFM по потребителям, а не по
+привычке: <code>net48</code>-приложение подключит <code>netstandard2.0</code>-библиотеку, но
+не подключит библиотеку, собранную только под <code>net8.0</code>.</p>`,
+        code: `# новая библиотека классов -> Acme.Shop.Domain.dll
+dotnet new classlib -n Acme.Shop.Domain
+
+# подключаем её из приложения (project reference, без NuGet)
+dotnet add Acme.Shop.Api reference Acme.Shop.Domain
+
+<!-- вариант 1: только современный .NET -->
+<TargetFramework>net8.0</TargetFramework>
+
+<!-- вариант 2: нужен и старый .NET Framework -->
+<TargetFramework>netstandard2.0</TargetFramework>
+
+<!-- вариант 3: сразу два таргета, две DLL в пакете -->
+<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+
+// при multi-targeting код можно ветвить по таргету
+public static string Describe()
+{
+#if NET8_0_OR_GREATER
+    return "доступны современные API";
+#else
+    return "режим широкой совместимости";
+#endif
+}
+
+// внутри решения — project reference; между репозиториями — NuGet-пакет`,
+        deep: `<p><b>Глубже:</b> <code>netstandard2.1</code> выглядит как «просто версия побольше»,
+но у него есть ловушка: .NET Framework его <b>не поддерживает вообще</b>. То есть переход с
+<code>2.0</code> на <code>2.1</code> не добавляет немного API — он выкидывает всю
+Framework-аудиторию, ради которой Standard и брали. Поэтому реально живых вариантов два:
+<code>netstandard2.0</code> (максимальная совместимость) или современный
+<code>net8.0</code>. Промежуточный <code>2.1</code> почти всегда худший из миров.</p>`,
+        links: [
+          { label: "MS Learn — .NET Standard", url: "https://learn.microsoft.com/en-us/dotnet/standard/net-standard" },
+          { label: "MS Learn — Target frameworks (TFM)", url: "https://learn.microsoft.com/en-us/dotnet/standard/frameworks" }
+        ],
+        task: {
+          q: "Твою библиотеку должны подключать и старые приложения на .NET Framework 4.8. Какой TargetFramework выбрать?",
+          options: [
+            "net8.0 — самый новый, значит совместим со всем",
+            "netstandard2.1 — новее, чем 2.0, и поддерживает Framework",
+            "netstandard2.0",
+            "net48 — другого варианта нет"
+          ],
+          answer: 2,
+          explain: "netstandard2.0 — единственная версия Standard, которую понимает .NET Framework 4.6.1+; современный .NET такие библиотеки тоже подключает. netstandard2.1 Framework не поддерживает вообще."
+        }
+      },
+      {
+        id: "asm-6",
+        title: "NuGet: PackageReference и restore",
+        subtitle: "Магазин готовых деталей — со списком покупок",
+        theory: `
+<p>Ты не выплавляешь болты сам — покупаешь готовые. <b>NuGet</b> — это магазин деталей для
+.NET, а пакет <code>.nupkg</code> — коробка: внутри собранные DLL под один или несколько TFM,
+плюс метаданные (id, версия, зависимости, лицензия).</p>
+<p>Ты не хранишь эти DLL в репозитории. В проекте лежит только <i>список покупок</i> —
+&lt;PackageReference /&gt; с id и версией. Команда <code>dotnet restore</code> читает список,
+строит граф зависимостей, скачивает недостающее в общий кэш
+(<code>~/.nuget/packages</code>) и записывает решённый результат в
+<code>obj/project.assets.json</code>.</p>
+<p>Дальше начинается интересное: <b>транзитивные</b> зависимости. Ты подключил один пакет, а он
+притащил три своих. Если два пакета хотят разные версии одной и той же библиотеки, NuGet
+пытается выбрать <i>одну</i>, которая устроит всех. Не получается — restore ругается.</p>
+<p>Лечение по порядку: посмотреть граф командой
+<code>dotnet list package --include-transitive</code>; обновить пакеты до совместимых версий;
+если нужно — закрепить версию явной ссылкой; в большом репозитории вынести все версии в один
+файл <code>Directory.Packages.props</code>. И никогда не копировать DLL в
+<code>bin</code> руками.</p>`,
+        code: `dotnet add package Serilog --version 4.0.0
+# info : PackageReference for package 'Serilog' version '4.0.0' added to project.
+
+<!-- в csproj появилась строка списка покупок -->
+<ItemGroup>
+  <PackageReference Include="Serilog" Version="4.0.0" />
+</ItemGroup>
+
+dotnet restore
+# качает пакеты в общий кэш ~/.nuget/packages
+# и пишет решённый граф в obj/project.assets.json
+
+dotnet list package --include-transitive
+#   Serilog             4.0.0        <- попросил я сам
+#   > Acme.Shared       2.0.0        <- пришёл транзитивно, я его не просил
+
+# Конфликт: пакету A нужен Acme.Shared >= 1.0, пакету B нужен >= 2.0.
+# NuGet ищет одну версию для всех. Если не находит — restore падает.
+
+<!-- решение: закрепить версию явной ссылкой -->
+<PackageReference Include="Acme.Shared" Version="2.1.0" />
+
+dotnet list package --outdated   # что уже устарело`,
+        deep: `<p><b>Глубже:</b> в графе NuGet побеждает не самая новая версия, а <b>самая низкая,
+которая удовлетворяет все ограничения</b>. Это сделано специально: так результат restore
+предсказуем и не меняется сам от того, что кто-то выложил на nuget.org новый релиз. Отсюда же
+следствие — если ты хочешь конкретную версию, её нужно попросить <i>прямой</i>
+&lt;PackageReference /&gt;: прямая ссылка всегда сильнее любых транзитивных пожеланий.</p>`,
+        links: [
+          { label: "NuGet — PackageReference in project files", url: "https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files" },
+          { label: "NuGet — Dependency resolution", url: "https://learn.microsoft.com/en-us/nuget/concepts/dependency-resolution" }
+        ],
+        task: {
+          kind: "write",
+          q: "Напиши команду CLI, которая добавит в проект пакет Serilog именно версии 4.0.0.",
+          placeholder: "dotnet ...",
+          must: ["dotnetaddpackage", "serilog", "4.0.0"],
+          solution: "dotnet add package Serilog --version 4.0.0",
+          explain: "dotnet add package дописывает PackageReference в csproj и сразу делает restore. Без --version возьмётся последняя стабильная версия."
+        }
+      },
+      {
+        id: "asm-7",
+        title: "Настройки: appsettings vs NuGet.config",
+        subtitle: "Что читает программа и что читает сборка",
+        theory: `
+<p>В квартире два разных «регулятора»: термостат, которым ты крутишь температуру каждый день,
+и щиток с автоматами, который определяет, как вообще заведён свет. Их путают, а это разные
+слои. В .NET то же самое: настройки <i>приложения</i> и настройки <i>проекта</i>.</p>
+<p><b>appsettings.json</b> — термостат. Его читает твой код во время работы: строки подключения,
+таймауты, флаги функций. Значения складываются слоями, и каждый следующий слой перекрывает
+предыдущий: <code>appsettings.json</code> → <code>appsettings.Development.json</code> →
+user secrets → переменные окружения → аргументы командной строки. Вложенный ключ в переменной
+окружения пишется через двойное подчёркивание: <code>Shipping__DefaultCarrier</code>.</p>
+<p><b>NuGet.config</b> и <code>.csproj</code> — щиток. Их читает не приложение, а
+<code>restore</code> и сборка: откуда качать пакеты и какие версии брать.</p>
+<p>Отсюда рождается классика «у меня работает, в CI падает». NuGet склеивает конфиги с
+нескольких уровней: машина → пользователь → репозиторий. Разработчик добавил приватный фид в
+своём user-конфиге — у него restore зелёный, у коллеги и в CI «package not found». Лечится
+файлом <code>NuGet.config</code> в корне репозитория с <code>&lt;clear /&gt;</code> и явным
+списком источников: тогда все клоны и CI берут пакеты из одного и того же места.</p>`,
+        code: `// appsettings.json — настройки приложения (их читает твой код)
+{
+  "ConnectionStrings": {
+    "ShopDb": "Server=localhost;Database=Shop"
+  },
+  "Shipping": {
+    "DefaultCarrier": "DHL",
+    "TimeoutSeconds": 30
+  }
+}
+
+// Слои, где каждый следующий перекрывает предыдущий:
+//   appsettings.json -> appsettings.{Environment}.json -> user secrets
+//   -> переменные окружения -> аргументы командной строки
+// Вложенный ключ в переменной окружения: Shipping__DefaultCarrier=UPS
+
+<!-- NuGet.config в корне репозитория — настройки сборки (их читает restore) -->
+<configuration>
+  <packageSources>
+    <clear />   <!-- забыть фиды, настроенные на конкретной машине -->
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="acme-private" value="https://pkgs.example.com/acme/index.json" />
+  </packageSources>
+</configuration>
+<!-- Пароли и токены здесь не хранят: их дают через CI-секреты
+     или credential provider. -->`,
+        deep: `<p><b>Глубже:</b> <code>NuGet.config</code> отвечает только на вопрос «откуда
+качать», а <i>какую версию</i> взять — решают <code>PackageReference</code> и центральное
+управление версиями. Полностью воспроизводимый restore получается лишь когда зафиксировано и
+то, и другое. И самый неприятный сценарий именно здесь: если один и тот же id и version лежит
+на двух фидах с разным содержимым, победит тот, что ответит первым — а он на разных машинах
+разный. Спасает <code>packageSourceMapping</code>: правило «всё, что начинается с
+<code>Acme.</code>, брать только с приватного фида» делает выбор однозначным.</p>`,
+        links: [
+          { label: "NuGet — nuget.config reference", url: "https://learn.microsoft.com/en-us/nuget/reference/nuget-config-file" },
+          { label: "MS Learn — Configuration in .NET", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration" }
+        ],
+        task: {
+          q: "Локально dotnet restore проходит, а в CI падает с «package not found» на внутреннем пакете Acme.Shared. Что вероятнее всего?",
+          options: [
+            "В CI не хватает оперативной памяти для restore",
+            "Приватный фид прописан только в user-level конфиге разработчика, а не в NuGet.config репозитория",
+            "В appsettings.json неверная строка подключения к базе",
+            "В PackageReference версия записана словами, а не цифрами"
+          ],
+          answer: 1,
+          explain: "NuGet склеивает конфиги машины, пользователя и репозитория. Источник, добавленный только у себя, в CI не существует. Фиды объявляют в NuGet.config в корне репозитория, с &lt;clear /&gt; перед списком."
+        }
+      }
+    ]
   }
 ];
 
@@ -2102,6 +3046,8 @@ const WORLD_ORDER = [
   "creational",    // Паттерны — порождающие
   "structural",    // Паттерны — структурные
   "behavioral",    // Паттерны — поведенческие
+  "reflection",    // Reflection — чтение метаданных в рантайме
+  "assemblies",    // Namespaces, сборки и NuGet
 ];
 const orderedWorlds = WORLD_ORDER
   .map(id => WORLDS.find(w => w.id === id))

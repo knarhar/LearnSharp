@@ -214,9 +214,11 @@
     if (!done.has(levelId)) { done.add(levelId); saveDone(done); }
   }
   function updateXp() {
-    const count = done.size;
-    const total = allLevels().length;
-    xpEl.innerHTML = `<b>${count * XP_PER_LEVEL} XP</b><span class="xp-count"> · ${count}/${total} ${t.lessons}</span>`;
+    // XP counts every finished lesson; the "x/y" counter only counts lessons that
+    // exist in the current language (some worlds are RU-only for now)
+    const here = new Set(allLevels().map(l => l.id));
+    const count = [...done].filter(id => here.has(id)).length;
+    xpEl.innerHTML = `<b>${done.size * XP_PER_LEVEL} XP</b><span class="xp-count"> · ${count}/${here.size} ${t.lessons}</span>`;
   }
 
   /* ---------- helpers ---------- */
