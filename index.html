@@ -8,15 +8,17 @@
   <link rel="icon" href="favicon.svg?v=5" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Noto Sans Armenian only supplies the Armenian glyphs: Inter and JetBrains Mono
+       have none, so the browser falls back to it letter by letter. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Noto+Sans+Armenian:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script>
     // apply saved theme + language before first paint so there's no flash
     try { if (localStorage.getItem("csharp-deepdive-theme") === "dark")
       document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {}
-    try { if (localStorage.getItem("csharp-deepdive-lang") === "en")
-      document.documentElement.lang = "en"; } catch (e) {}
+    try { var l = localStorage.getItem("csharp-deepdive-lang");
+      if (l === "en" || l === "hy") document.documentElement.lang = l; } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=23" />
+  <link rel="stylesheet" href="styles.css?v=24" />
 </head>
 <body>
   <header class="topbar">
@@ -33,6 +35,7 @@
           <div class="lang-switch" id="langSwitch" role="group">
             <button type="button" data-lang="ru" aria-pressed="true">RU</button>
             <button type="button" data-lang="en" aria-pressed="false">EN</button>
+            <button type="button" data-lang="hy" aria-pressed="false">ՀԱՅ</button>
           </div>
           <button class="btn-theme" id="themeBtn">🌙</button>
           <button class="btn-reset" id="resetBtn">Сброс</button>
@@ -45,6 +48,7 @@
 
   <script src="data.js?v=7"></script>
   <script src="data.en.js?v=1"></script>
-  <script src="app.js?v=16"></script>
+  <script src="data.hy.js?v=2"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>

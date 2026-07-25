@@ -24,7 +24,6 @@
       themeTitle: "День / ночь",
       themeAria: "Переключить тему",
       langAria: "Язык сайта",
-      langTo: "Switch to English",
       menu: "Меню настроек",
       reset: "Сброс",
       resetTitle: "Сбросить прогресс",
@@ -79,7 +78,6 @@
       themeTitle: "Day / night",
       themeAria: "Switch theme",
       langAria: "Site language",
-      langTo: "Переключить на русский",
       menu: "Settings menu",
       reset: "Reset",
       resetTitle: "Reset progress",
@@ -125,19 +123,79 @@
       navNext: "Next →",
       navDone: "Finish ✓",
       toastXp: "+100 XP · lesson complete"
+    },
+    /* Armenian. Technical terms stay in English, same as in the lessons. */
+    hy: {
+      docTitle: "C# Deep Dive — սովորիր խաղալով",
+      docDesc: "Ինտերակտիվ խաղ-դասընթաց C#-ի համար՝ generics, variance, enumerables, FileStream I/O, delegates և events, EventBus և design patterns։",
+      brandTag: "սովորիր խաղալով",
+      brandAria: "Գլխավոր էջ — ճանապարհի քարտեզը",
+      themeTitle: "Ցերեկ / գիշեր",
+      themeAria: "Փոխել տեսքը",
+      langAria: "Կայքի լեզուն",
+      menu: "Կարգավորումների մենյու",
+      reset: "Զրոյացնել",
+      resetTitle: "Զրոյացնել առաջընթացը",
+      resetConfirm: "Զրոյացնե՞լ ամբողջ առաջընթացը և XP-ն։",
+      lessons: "դաս",
+
+      heroTitle: "Քո ճանապարհը C#-ով",
+      heroText: `Գնա ճանապարհով վերևից ներքև։ Ամեն աշխարհ մի թեմա է, իսկ ներսի կետերը՝ դասերը։
+             Կանաչը՝ անցած, դեղինը՝ որտեղ հիմա ես։ Առաջընթացը պահվում է browser-ում։`,
+      overall: "Ընդհանուր առաջընթաց",
+      tagNow: "Դու այստեղ ես",
+      ctaAllDone: "🎉 Ամեն ինչ անցած է — բոլոր աշխարհները",
+      ctaStart: "▶ Սկսել",
+      ctaContinue: "▶ Շարունակել",
+      allWorldsBtn: "Ուսումնասիրել աշխարհները",
+
+      crumbPath: "Ճանապարհ",
+      crumbAllWorlds: "Բոլոր աշխարհները",
+      crumbWorlds: "Աշխարհներ",
+      worldsTitle: "Բոլոր աշխարհները",
+      worldsText: "Ընտրիր ցանկացած աշխարհ և բացիր նրա դասերը։",
+      worldProgress: "Աշխարհի առաջընթաց",
+      statusDone: "Անցած",
+      statusStart: "Սկսել",
+
+      levelWord: "Մակարդակ",
+      blockTheory: "📖 Տեսություն",
+      blockExample: "💻 Օրինակ",
+      blockDeeper: "🔬 Ավելի խորը",
+      blockLinks: "🔗 Փաստաթղթեր և գրքեր",
+      blockTask: "🎯 Առաջադրանք",
+      placeholder: "Գրիր պատասխանը այստեղ...",
+      check: "Ստուգել",
+      reveal: "Ցույց տալ պատասխանը",
+      answerLabel: "✅ Պատասխան",
+      empty: "<b>Դատարկ է։</b> Գրիր պատասխանը վերևի դաշտում։",
+      okWrite: "<b>Ճիշտ է! ✓</b> ",
+      noWrite: "<b>Դեռ ոչ։</b> Ստուգիր պատասխանի հիմնական մասերը և նորից փորձիր։",
+      okQuiz: "<b>Ճիշտ է! ✓</b> ",
+      noQuiz: "<b>Ոչ այնքան։</b> ",
+      navBack: "← Հետ",
+      navList: "☰ Դասերի ցանկ",
+      navNext: "Առաջ →",
+      navDone: "Պատրաստ է ✓",
+      toastXp: "+100 XP · դասն անցած է"
     }
   };
 
+  // shown as the tooltip on each language button, in its own language
+  const LANG_NAMES = { ru: "Русский", en: "English", hy: "Հայերեն" };
+  const CONTENT = { ru: "WORLDS_RU", en: "WORLDS_EN", hy: "WORLDS_HY" };
+
   function loadLang() {
-    try { return localStorage.getItem(LANG_KEY) === "en" ? "en" : "ru"; }
-    catch { return "ru"; }
+    try {
+      const saved = localStorage.getItem(LANG_KEY);
+      return UI[saved] ? saved : "ru";
+    } catch { return "ru"; }
   }
   let lang = loadLang();
   let t = UI[lang];
   let WORLDS = [];
   function pickContent() {
-    const src = lang === "en" ? window.WORLDS_EN : window.WORLDS_RU;
-    WORLDS = src || window.WORLDS_RU || [];
+    WORLDS = window[CONTENT[lang]] || window.WORLDS_RU || [];
   }
   pickContent();
 
@@ -608,7 +666,7 @@
       langSwitch.querySelectorAll("button").forEach(b => {
         const active = b.dataset.lang === lang;
         b.setAttribute("aria-pressed", active ? "true" : "false");
-        b.title = active ? t.langAria : t.langTo;
+        b.title = LANG_NAMES[b.dataset.lang] || b.dataset.lang;
       });
     }
     if (burgerBtn) {
