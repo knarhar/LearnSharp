@@ -3046,8 +3046,8 @@ const WORLD_ORDER = [
   "creational",    // Паттерны — порождающие
   "structural",    // Паттерны — структурные
   "behavioral",    // Паттерны — поведенческие
-  "reflection",    // Reflection — чтение метаданных в рантайме
   "assemblies",    // Namespaces, сборки и NuGet
+  "reflection",    // Reflection — чтение метаданных в рантайме
 ];
 const orderedWorlds = WORLD_ORDER
   .map(id => WORLDS.find(w => w.id === id))
