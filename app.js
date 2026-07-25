@@ -1,15 +1,143 @@
 /* =====================================================================
    C# Deep Dive — app logic (vanilla JS, no build step)
    Routing via location.hash, progress in localStorage.
+   Two languages: lesson content comes from data.js (ru) / data.en.js (en),
+   interface strings from the UI dictionary below. Level ids are shared,
+   so progress survives switching language.
    ===================================================================== */
 (function () {
   "use strict";
 
-  const WORLDS = window.WORLDS || [];
   const STORE_KEY = "csharp-deepdive-progress-v1";
+  const LANG_KEY = "csharp-deepdive-lang";
   const app = document.getElementById("app");
   const xpEl = document.getElementById("xp");
   const XP_PER_LEVEL = 100;
+
+  /* ---------- language ---------- */
+  const UI = {
+    ru: {
+      docTitle: "C# Deep Dive — обучалка-игра",
+      docDesc: "Интерактивная игра-обучалка по C#: дженерики, вариантность, enumerables, FileStream I/O, делегаты и события, EventBus и паттерны проектирования.",
+      brandTag: "обучалка-игра",
+      brandAria: "На главную — роадмап",
+      themeTitle: "День / ночь",
+      themeAria: "Переключить тему",
+      langAria: "Язык сайта",
+      langTo: "Switch to English",
+      reset: "Сброс",
+      resetTitle: "Сбросить прогресс",
+      resetConfirm: "Сбросить весь прогресс и XP?",
+      lessons: "уроков",
+
+      heroTitle: "Твой путь по C#",
+      heroText: `Иди по дорожке сверху вниз. Каждый мир — это тема, а точки внутри — уроки.
+             Зелёное — пройдено, жёлтое — где ты сейчас. Прогресс хранится в браузере.`,
+      overall: "Общий прогресс",
+      tagNow: "Сейчас",
+      ctaAllDone: "🎉 Всё пройдено — к списку миров",
+      ctaStart: "▶ Начать",
+      ctaContinue: "▶ Продолжить",
+      allWorldsBtn: "Все миры списком",
+
+      crumbPath: "Путь",
+      crumbAllWorlds: "Все миры",
+      crumbWorlds: "Миры",
+      worldsTitle: "Все миры",
+      worldsText: "Выбери любой мир и открой его уроки.",
+      worldProgress: "Прогресс мира",
+      statusDone: "Пройдено",
+      statusStart: "Начать",
+
+      levelWord: "Уровень",
+      blockTheory: "📖 Теория",
+      blockExample: "💻 Пример",
+      blockDeeper: "🔬 Глубже",
+      blockLinks: "🔗 Доки и книги",
+      blockTask: "🎯 Задание",
+      placeholder: "Напиши ответ здесь...",
+      check: "Проверить",
+      reveal: "Показать ответ",
+      answerLabel: "✅ Ответ",
+      empty: "<b>Пусто.</b> Напиши ответ в поле выше.",
+      okWrite: "<b>Верно! ✓</b> ",
+      noWrite: "<b>Пока не то.</b> Проверь ключевые части ответа и попробуй ещё раз.",
+      okQuiz: "<b>Верно! ✓</b> ",
+      noQuiz: "<b>Не совсем.</b> ",
+      navBack: "← Назад",
+      navList: "☰ К списку уроков",
+      navNext: "Дальше →",
+      navDone: "Готово ✓",
+      toastXp: "+100 XP · урок пройден"
+    },
+    en: {
+      docTitle: "C# Deep Dive — learn by playing",
+      docDesc: "An interactive C# learning game: generics, variance, enumerables, FileStream I/O, delegates and events, EventBus and design patterns.",
+      brandTag: "learn by playing",
+      brandAria: "Back home — the roadmap",
+      themeTitle: "Day / night",
+      themeAria: "Switch theme",
+      langAria: "Site language",
+      langTo: "Переключить на русский",
+      reset: "Reset",
+      resetTitle: "Reset progress",
+      resetConfirm: "Reset all progress and XP?",
+      lessons: "lessons",
+
+      heroTitle: "Your path through C#",
+      heroText: `Follow the track from top to bottom. Each world is a topic, and the dots inside are lessons.
+             Green means done, yellow is where you are now. Progress is saved in your browser.`,
+      overall: "Overall progress",
+      tagNow: "You are here",
+      ctaAllDone: "🎉 All done — see every world",
+      ctaStart: "▶ Start",
+      ctaContinue: "▶ Continue",
+      allWorldsBtn: "All worlds as a list",
+
+      crumbPath: "Path",
+      crumbAllWorlds: "All worlds",
+      crumbWorlds: "Worlds",
+      worldsTitle: "All worlds",
+      worldsText: "Pick any world and open its lessons.",
+      worldProgress: "World progress",
+      statusDone: "Done",
+      statusStart: "Start",
+
+      levelWord: "Level",
+      blockTheory: "📖 Theory",
+      blockExample: "💻 Example",
+      blockDeeper: "🔬 Going deeper",
+      blockLinks: "🔗 Docs and books",
+      blockTask: "🎯 Task",
+      placeholder: "Write your answer here...",
+      check: "Check",
+      reveal: "Show answer",
+      answerLabel: "✅ Answer",
+      empty: "<b>Empty.</b> Write your answer in the field above.",
+      okWrite: "<b>Correct! ✓</b> ",
+      noWrite: "<b>Not quite yet.</b> Check the key parts of your answer and try again.",
+      okQuiz: "<b>Correct! ✓</b> ",
+      noQuiz: "<b>Not quite.</b> ",
+      navBack: "← Back",
+      navList: "☰ Lesson list",
+      navNext: "Next →",
+      navDone: "Finish ✓",
+      toastXp: "+100 XP · lesson complete"
+    }
+  };
+
+  function loadLang() {
+    try { return localStorage.getItem(LANG_KEY) === "en" ? "en" : "ru"; }
+    catch { return "ru"; }
+  }
+  let lang = loadLang();
+  let t = UI[lang];
+  let WORLDS = [];
+  function pickContent() {
+    const src = lang === "en" ? window.WORLDS_EN : window.WORLDS_RU;
+    WORLDS = src || window.WORLDS_RU || [];
+  }
+  pickContent();
 
   /* ---------- progress ---------- */
   function loadDone() {
@@ -28,7 +156,7 @@
   function updateXp() {
     const count = done.size;
     const total = allLevels().length;
-    xpEl.innerHTML = `<b>${count * XP_PER_LEVEL} XP</b><span class="xp-count"> · ${count}/${total} уроков</span>`;
+    xpEl.innerHTML = `<b>${count * XP_PER_LEVEL} XP</b><span class="xp-count"> · ${count}/${total} ${t.lessons}</span>`;
   }
 
   /* ---------- helpers ---------- */
@@ -144,7 +272,7 @@
             <span class="road-ico">${w.icon}</span>
             <h3>${w.name}</h3>
             <span class="road-meta">
-              ${state === "current" ? '<span class="road-tag">Сейчас</span>' : ""}
+              ${state === "current" ? `<span class="road-tag">${t.tagNow}</span>` : ""}
               <span class="road-count">${p.done}/${p.total}</span>
             </span>
           </div>
@@ -156,27 +284,26 @@
 
     let cta;
     if (!next) {
-      cta = `<button class="btn" data-nav="worlds">🎉 Всё пройдено — к списку миров</button>`;
+      cta = `<button class="btn" data-nav="worlds">${t.ctaAllDone}</button>`;
     } else if (d === 0) {
       // no progress yet — invite the user in with a glowing "Start" button
-      cta = `<button class="btn btn-primary btn-pulse" data-nav="level/${nextId}">▶ Начать</button>`;
+      cta = `<button class="btn btn-primary btn-pulse" data-nav="level/${nextId}">${t.ctaStart}</button>`;
     } else {
-      cta = `<button class="btn btn-pulse-go" data-nav="level/${nextId}">▶ Продолжить</button>`;
+      cta = `<button class="btn btn-pulse-go" data-nav="level/${nextId}">${t.ctaContinue}</button>`;
     }
 
     app.innerHTML = `
       <div class="view">
         <section class="hero">
-          <h1>Твой путь по C#</h1>
-          <p>Иди по дорожке сверху вниз. Каждый мир — это тема, а точки внутри — уроки.
-             Зелёное — пройдено, жёлтое — где ты сейчас. Прогресс хранится в браузере.</p>
+          <h1>${t.heroTitle}</h1>
+          <p>${t.heroText}</p>
           <div class="progress-overall">
-            <div class="label"><span>Общий прогресс</span><span>${d}/${total} · ${pct}%</span></div>
+            <div class="label"><span>${t.overall}</span><span>${d}/${total} · ${pct}%</span></div>
             <div class="bar"><span style="width:${pct}%"></span></div>
           </div>
           <div class="hero-actions">
             ${cta}
-            <button class="btn btn-ghost" data-nav="worlds">Все миры списком</button>
+            <button class="btn btn-ghost" data-nav="worlds">${t.allWorldsBtn}</button>
           </div>
         </section>
         <ol class="roadmap">${steps}</ol>
@@ -208,12 +335,12 @@
 
     app.innerHTML = `
       <div class="view">
-        <div class="crumbs"><a data-nav="">Путь</a> <span>›</span> <span>Все миры</span></div>
+        <div class="crumbs"><a data-nav="">${t.crumbPath}</a> <span>›</span> <span>${t.crumbAllWorlds}</span></div>
         <section class="hero" style="margin-bottom:16px">
-          <h1 style="font-size:var(--fs-24)">Все миры</h1>
-          <p style="font-size:var(--fs-16)">Выбери любой мир и открой его уроки.</p>
+          <h1 style="font-size:var(--fs-24)">${t.worldsTitle}</h1>
+          <p style="font-size:var(--fs-16)">${t.worldsText}</p>
           <div class="progress-overall">
-            <div class="label"><span>Общий прогресс</span><span>${d}/${total} · ${pct}%</span></div>
+            <div class="label"><span>${t.overall}</span><span>${d}/${total} · ${pct}%</span></div>
             <div class="bar"><span style="width:${pct}%"></span></div>
           </div>
         </section>
@@ -235,20 +362,20 @@
           <h4>${l.title}</h4>
           <span>${l.subtitle}</span>
         </span>
-        <span class="status">${isDone ? 'Пройдено' : 'Начать'}</span>
+        <span class="status">${isDone ? t.statusDone : t.statusStart}</span>
       </button>`;
     }).join("");
 
     const p = worldProgress(w);
     app.innerHTML = `
       <div class="view">
-        <div class="crumbs"><a data-nav="">Путь</a> <span>›</span> <a data-nav="worlds">Миры</a> <span>›</span> <span>${w.name}</span></div>
+        <div class="crumbs"><a data-nav="">${t.crumbPath}</a> <span>›</span> <a data-nav="worlds">${t.crumbWorlds}</a> <span>›</span> <span>${w.name}</span></div>
         <div class="hero" style="margin-bottom:16px">
           <h1 style="font-size:var(--fs-24)">${w.icon} ${w.name}</h1>
           <p style="font-size:var(--fs-16)">${w.blurb}</p>
         </div>
         <div class="progress-overall" style="margin-top:0">
-          <div class="label"><span>Прогресс мира</span><span>${p.done}/${p.total}</span></div>
+          <div class="label"><span>${t.worldProgress}</span><span>${p.done}/${p.total}</span></div>
           <div class="bar"><span style="width:${p.pct}%"></span></div>
         </div>
         <div class="levels">${rows}</div>
@@ -280,11 +407,11 @@
         <div class="quiz">
           <p class="q">${level.task.q}</p>
           <textarea id="answer" class="answer" rows="4"
-            placeholder="${(level.task.placeholder || 'Напиши ответ здесь...').replace(/"/g, '&quot;')}"
+            placeholder="${(level.task.placeholder || t.placeholder).replace(/"/g, '&quot;')}"
             spellcheck="false"></textarea>
           <div class="write-actions">
-            <button class="btn btn-primary" id="checkBtn">Проверить</button>
-            <button class="btn btn-ghost" id="revealBtn">Показать ответ</button>
+            <button class="btn btn-primary" id="checkBtn">${t.check}</button>
+            <button class="btn btn-ghost" id="revealBtn">${t.reveal}</button>
           </div>
           <div class="feedback" id="feedback"></div>
           <div class="solution" id="solution"></div>
@@ -311,44 +438,44 @@
     app.innerHTML = `
       <div class="view lesson">
         <div class="crumbs">
-          <a data-nav="worlds">Миры</a> <span>›</span>
+          <a data-nav="worlds">${t.crumbWorlds}</a> <span>›</span>
           <a data-nav="world/${world.id}">${world.name}</a> <span>›</span>
-          <span>Уровень ${idxInWorld + 1}</span>
+          <span>${t.levelWord} ${idxInWorld + 1}</span>
         </div>
 
         <h2>${level.title}</h2>
         <p class="subtitle">${level.subtitle}</p>
 
         <div class="block">
-          <div class="block-label">📖 Теория</div>
+          <div class="block-label">${t.blockTheory}</div>
           <div class="prose">${level.theory}</div>
         </div>
 
         <div class="block">
-          <div class="block-label">💻 Пример</div>
+          <div class="block-label">${t.blockExample}</div>
           <pre class="code"><code>${highlight(level.code)}</code></pre>
         </div>
 
         <div class="block deep">
-          <div class="block-label">🔬 Глубже</div>
+          <div class="block-label">${t.blockDeeper}</div>
           <div class="prose">${level.deep}</div>
         </div>
 
         <div class="block">
-          <div class="block-label">🔗 Доки и книги</div>
+          <div class="block-label">${t.blockLinks}</div>
           <div class="links">${links}${pdfNotes}</div>
         </div>
 
         <div class="block">
-          <div class="block-label">🎯 Задание</div>
+          <div class="block-label">${t.blockTask}</div>
           ${taskHtml}
         </div>
 
         <div class="lesson-nav">
-          ${prev ? `<button class="btn btn-ghost" data-nav="level/${prev.id}">← Назад</button>` : ''}
-          <button class="btn btn-ghost" data-nav="world/${world.id}">☰ К списку уроков</button>
-          ${next ? `<button class="btn btn-primary" data-nav="level/${next.id}">Дальше →</button>`
-                 : `<button class="btn btn-primary" data-nav="">Готово ✓</button>`}
+          ${prev ? `<button class="btn btn-ghost" data-nav="level/${prev.id}">${t.navBack}</button>` : ''}
+          <button class="btn btn-ghost" data-nav="world/${world.id}">${t.navList}</button>
+          ${next ? `<button class="btn btn-primary" data-nav="level/${next.id}">${t.navNext}</button>`
+                 : `<button class="btn btn-primary" data-nav="">${t.navDone}</button>`}
         </div>
       </div>`;
 
@@ -370,29 +497,27 @@
       const user = norm(ta.value);
       if (!user) {
         feedback.className = "feedback show no";
-        feedback.innerHTML = "<b>Пусто.</b> Напиши ответ в поле выше.";
+        feedback.innerHTML = t.empty;
         return;
       }
       const need = (level.task.must || []).map(norm);
       const ok = need.every(fragment => user.includes(fragment));
 
       feedback.className = "feedback show " + (ok ? "ok" : "no");
-      feedback.innerHTML = ok
-        ? "<b>Верно! ✓</b> " + level.task.explain
-        : "<b>Пока не то.</b> Проверь ключевые части ответа и попробуй ещё раз.";
+      feedback.innerHTML = ok ? t.okWrite + level.task.explain : t.noWrite;
 
       if (ok) {
         const wasDone = done.has(level.id);
         markDone(level.id);
         updateXp();
-        if (!wasDone) toast("+100 XP · урок пройден");
+        if (!wasDone) toast(t.toastXp);
       }
     });
 
     revealBtn.addEventListener("click", () => {
       solutionBox.className = "solution show";
       solutionBox.innerHTML =
-        `<div class="block-label">✅ Ответ</div>
+        `<div class="block-label">${t.answerLabel}</div>
          <pre class="code"><code>${highlight(level.task.solution || "")}</code></pre>
          <p class="prose" style="margin-top:8px">${level.task.explain}</p>`;
     });
@@ -419,13 +544,13 @@
 
       const ok = chosen === correct;
       feedback.className = "feedback show " + (ok ? "ok" : "no");
-      feedback.innerHTML = (ok ? "<b>Верно! ✓</b> " : "<b>Не совсем.</b> ") + level.task.explain;
+      feedback.innerHTML = (ok ? t.okQuiz : t.noQuiz) + level.task.explain;
 
       if (ok) {
         const wasDone = done.has(level.id);
         markDone(level.id);
         updateXp();
-        if (!wasDone) toast("+100 XP · урок пройден");
+        if (!wasDone) toast(t.toastXp);
       }
     });
   }
@@ -453,19 +578,69 @@
     if (nav) { e.preventDefault(); location.hash = nav.dataset.nav; }
   });
 
-  document.getElementById("resetBtn").addEventListener("click", () => {
-    if (confirm("Сбросить весь прогресс и XP?")) {
+  const resetBtn = document.getElementById("resetBtn");
+  resetBtn.addEventListener("click", () => {
+    if (confirm(t.resetConfirm)) {
       done = new Set(); saveDone(done); updateXp(); router();
     }
   });
+
+  /* ---------- language switch ---------- */
+  const langSwitch = document.getElementById("langSwitch");
+  const brand = document.getElementById("brand");
+  const brandTag = document.getElementById("brandTag");
+  const metaDesc = document.getElementById("metaDesc");
+
+  // everything outside #app that carries text: title, meta, brand, buttons
+  function paintChrome() {
+    document.documentElement.lang = lang;
+    document.title = t.docTitle;
+    if (metaDesc) metaDesc.setAttribute("content", t.docDesc);
+    if (brandTag) brandTag.textContent = t.brandTag;
+    if (brand) brand.setAttribute("aria-label", t.brandAria);
+    resetBtn.textContent = t.reset;
+    resetBtn.title = t.resetTitle;
+    resetBtn.setAttribute("aria-label", t.resetTitle);
+    if (langSwitch) {
+      langSwitch.setAttribute("aria-label", t.langAria);
+      langSwitch.querySelectorAll("button").forEach(b => {
+        const active = b.dataset.lang === lang;
+        b.setAttribute("aria-pressed", active ? "true" : "false");
+        b.title = active ? t.langAria : t.langTo;
+      });
+    }
+    paintThemeBtn();
+  }
+
+  function setLang(next) {
+    if (next === lang) return;
+    lang = next;
+    t = UI[lang];
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    pickContent();
+    paintChrome();
+    updateXp();
+    router();   // re-render the current view in the new language
+  }
+
+  if (langSwitch) {
+    langSwitch.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-lang]");
+      if (btn) setLang(btn.dataset.lang);
+    });
+  }
 
   /* ---------- day / night theme ---------- */
   const THEME_KEY = "csharp-deepdive-theme";
   const themeBtn = document.getElementById("themeBtn");
   function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
-  function paintThemeBtn() { if (themeBtn) themeBtn.textContent = isDark() ? "☀️" : "🌙"; }
+  function paintThemeBtn() {
+    if (!themeBtn) return;
+    themeBtn.textContent = isDark() ? "☀️" : "🌙";
+    themeBtn.title = t.themeTitle;
+    themeBtn.setAttribute("aria-label", t.themeAria);
+  }
   if (themeBtn) {
-    paintThemeBtn();
     themeBtn.addEventListener("click", () => {
       const goDark = !isDark();
       if (goDark) document.documentElement.setAttribute("data-theme", "dark");
@@ -476,6 +651,7 @@
   }
 
   window.addEventListener("hashchange", router);
+  paintChrome();
   updateXp();
   router();
 })();

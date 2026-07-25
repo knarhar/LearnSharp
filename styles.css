@@ -63,7 +63,7 @@ html[data-theme="dark"] .hero h1{
 }
 /* smooth cross-fade when flipping the switch */
 body, .topbar, .world-card, .road-card, .level-row, .quiz, .link-row, .deep,
-.opt, .bar, .xp-badge, .btn-reset, .btn-theme, .prose{
+.opt, .bar, .xp-badge, .btn-reset, .btn-theme, .lang-switch, .prose{
   transition:background-color .25s ease, color .25s ease, border-color .25s ease;
 }
 
@@ -141,6 +141,20 @@ a:hover{ text-decoration-color:var(--blue); }
 .btn-theme{ font-size:18px; padding:6px 12px; }
 .btn-theme:hover{ background:var(--yellow); color:var(--on); }
 .btn-reset:active, .btn-theme:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--ink); }
+
+/* language toggle — one pill, two segments, active one filled */
+.lang-switch{
+  display:flex; background:var(--paper-2); border:var(--border);
+  border-radius:999px; box-shadow:var(--shadow-sm); overflow:hidden;
+}
+.lang-switch button{
+  appearance:none; background:none; border:0; cursor:pointer;
+  font-family:'JetBrains Mono', monospace; font-size:var(--fs-14); font-weight:700;
+  color:var(--muted); padding:7px 11px; line-height:1;
+  transition:background .15s ease, color .15s ease;
+}
+.lang-switch button:hover{ color:var(--ink); }
+.lang-switch button[aria-pressed="true"]{ background:var(--yellow); color:var(--on); }
 
 /* ============ Buttons ============ */
 .btn{
@@ -486,7 +500,8 @@ pre.code code{ background:none; border:none; padding:0; color:#efe7d6; }
   :root{ --fs-32:26px; --fs-24:20px; --shadow:4px 4px 0 var(--ink); }
   .wrap{ padding:var(--sp-6) var(--sp-4) 64px; }
   .topbar-inner{ padding:var(--sp-3) var(--sp-4); gap:var(--sp-2); }
-  .brand small{ display:none; }
+  /* logo only: the wordmark would crowd the language + theme + reset controls */
+  .brand-name{ display:none; }
   .world-card{ padding:var(--sp-4); }
   .lesson-nav .btn{ min-width:120px; }
   /* Reset shrinks to a compact ↺ icon so it never crowds the top bar */

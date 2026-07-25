@@ -2111,5 +2111,5 @@ for (const w of WORLDS) {
   if (!orderedWorlds.includes(w)) orderedWorlds.push(w);
 }
 
-// доступно глобально для app.js
-window.WORLDS = orderedWorlds;
+// доступно глобально для app.js (английская версия — в data.en.js)
+window.WORLDS_RU = orderedWorlds;
