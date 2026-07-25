@@ -39,7 +39,7 @@
       ctaAllDone: "🎉 Всё пройдено — к списку миров",
       ctaStart: "▶ Начать",
       ctaContinue: "▶ Продолжить",
-      allWorldsBtn: "Все миры списком",
+      allWorldsBtn: "Исследовать миры",
 
       crumbPath: "Путь",
       crumbAllWorlds: "Все миры",
@@ -94,7 +94,7 @@
       ctaAllDone: "🎉 All done — see every world",
       ctaStart: "▶ Start",
       ctaContinue: "▶ Continue",
-      allWorldsBtn: "All worlds as a list",
+      allWorldsBtn: "Explore worlds",
 
       crumbPath: "Path",
       crumbAllWorlds: "All worlds",
