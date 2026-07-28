@@ -7,6 +7,1128 @@
    ===================================================================== */
 
 const WORLDS = [
+  /* ================= WORLD: ООП ================= */
+  {
+    id: "oop",
+    name: "ООП: объекты и связи",
+    icon: "⬢",
+    blurb: "Классы, инкапсуляция, наследование, полиморфизм, интерфейсы и связи между объектами — фундамент всего остального.",
+    levels: [
+      {
+        id: "oop-1",
+        title: "Класс и объект",
+        subtitle: "Форма для печенья и само печенье",
+        theory: `
+<p>Есть форма для вырезания печенья и есть печенье. Форма одна, печенек из неё — сколько
+захочешь, и каждая своя: одна с шоколадом, другая с орехами.</p>
+<p><b>Класс</b> — это форма. Описание: какие данные у вещи есть и что она умеет.
+<b>Объект</b> — конкретное печенье, сделанное по этой форме. Слово <code>new</code> как раз
+и значит «сделай мне ещё одну штуку по этому образцу».</p>
+<p>Внутри класса живут две вещи:</p>
+<ul>
+<li><b>данные</b> — поля и свойства (что объект <i>знает</i>: имя, здоровье, баланс);</li>
+<li><b>поведение</b> — методы (что объект <i>умеет</i>: бежать, платить, здороваться).</li>
+</ul>
+<p>Главная идея ООП в одном предложении: <b>данные и действия над ними живут вместе</b>, в
+одной коробке, а не разбросаны по программе. Тогда программа — это не гора функций, а
+компания объектов, которые общаются между собой.</p>`,
+        code: `// Класс — форма (описание)
+public class Player
+{
+    // данные: что объект знает
+    public string Name { get; set; }
+    public int Health { get; set; } = 100;
+
+    // поведение: что объект умеет
+    public void TakeDamage(int amount)
+    {
+        Health -= amount;
+        Console.WriteLine($"{Name} получил {amount}, осталось {Health}");
+    }
+}
+
+// Объекты — конкретные экземпляры, у каждого свои данные
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+anna.TakeDamage(30);   // Anna: 70
+bob.TakeDamage(10);    // Bob: 90  — данные Анны не тронуты`,
+        deep: `<p><b>Глубже:</b> объект класса живёт в куче (heap), а переменная хранит только
+<i>ссылку</i> на него — как бумажка с адресом дома, а не сам дом. Поэтому если написать
+<code>var b = a;</code>, дом останется один, а бумажек станет две: изменишь через
+<code>b</code> — увидишь и через <code>a</code>. У <code>struct</code> поведение другое:
+он копируется целиком.</p>`,
+        links: [
+          { label: "MS Learn — Classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes" },
+          { label: "MS Learn — Objects", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/objects" }
+        ],
+        task: {
+          q: "В чём разница между классом и объектом?",
+          options: [
+            "Это два названия одного и того же",
+            "Класс — описание (форма), объект — конкретный экземпляр, созданный по этому описанию",
+            "Объект — это файл, а класс — папка",
+            "Класс хранит данные, а объект только методы"
+          ],
+          answer: 1,
+          explain: "Класс пишется один раз, объектов по нему можно наделать сколько угодно, и у каждого будут свои значения полей."
+        }
+      },
+      {
+        id: "oop-2",
+        title: "Инкапсуляция",
+        subtitle: "Не лезь руками внутрь — есть кнопки",
+        theory: `
+<p>У банкомата нет дырки, через которую можно потрогать деньги напрямую. Есть кнопки:
+«снять», «положить». Банкомат сам решает, можно ли выполнить просьбу.</p>
+<p><b>Инкапсуляция</b> — ровно это: спрятать данные внутри объекта и выдать наружу только
+безопасные «кнопки». Поля делаем <code>private</code>, а доступ даём через свойства и
+методы, где можно <b>проверить</b>, что запрос разумный.</p>
+<p>Зачем так, если можно просто сделать поле <code>public</code>? Затем, что публичное поле
+любой может испортить — например, записать в баланс минус миллион. И тогда виноват будет не
+тот, кто испортил, а твой класс, потому что именно он должен был не допустить такого
+состояния.</p>
+<p>Правило простое: <b>объект обязан всегда быть в правильном состоянии</b>. Проверки живут
+внутри класса, а не рассыпаны по всей программе.</p>`,
+        code: `// ПЛОХО: данные нараспашку, любой может сломать
+public class BadAccount
+{
+    public decimal Balance;      // кто угодно: acc.Balance = -1000;
+}
+
+// ХОРОШО: поле спрятано, доступ через кнопки с проверкой
+public class BankAccount
+{
+    private decimal _balance;                    // никто снаружи не достанет
+
+    public decimal Balance => _balance;          // только чтение
+
+    public void Deposit(decimal amount)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Сумма должна быть больше нуля");
+        _balance += amount;
+    }
+
+    public bool TryWithdraw(decimal amount)
+    {
+        if (amount <= 0 || amount > _balance) return false;   // нельзя уйти в минус
+        _balance -= amount;
+        return true;
+    }
+}`,
+        deep: `<p><b>Глубже:</b> инкапсуляция — это не «напиши геттер и сеттер на каждое поле».
+Свойство <code>public int Age { get; set; }</code> защищает ровно ничего: это то же самое
+публичное поле, только длиннее. Настоящая инкапсуляция начинается там, где есть
+<i>правило</i>: возраст не бывает отрицательным, баланс не уходит в минус, заказ нельзя
+оплатить дважды. Нет правил — не выдумывай обёртки ради обёрток.</p>`,
+        links: [
+          { label: "MS Learn — Properties", url: "https://learn.microsoft.com/en-us/dotnet/csharp/properties" },
+          { label: "MS Learn — Access modifiers", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/access-modifiers" }
+        ],
+        task: {
+          kind: "write",
+          q: "Внутри класса есть поле <code>private int _age;</code>. Напиши свойство <code>Age</code>, которое отдаёт значение наружу, но НЕ позволяет менять его извне (только чтение).",
+          placeholder: "public int Age => ...",
+          must: ["publicintage=>_age"],
+          solution: `private int _age;
+
+public int Age => _age;          // короткая запись: только get
+
+// то же самое подробнее:
+// public int Age { get { return _age; } }`,
+          explain: "Свойство только с get отдаёт значение наружу, а менять его может лишь код внутри класса. Это и есть контролируемый доступ."
+        }
+      },
+      {
+        id: "oop-3",
+        title: "Три связи между объектами",
+        subtitle: "is-a, has-a, uses-a — и почему это важнее кода",
+        theory: `
+<p>Объекты не живут поодиночке. Между ними бывает ровно три вида отношений, и почти вся
+архитектура — это правильный выбор между ними.</p>
+<ul>
+<li><b>is-a («является»)</b> — собака <i>является</i> животным. Это <b>наследование</b>.</li>
+<li><b>has-a («имеет»)</b> — у машины <i>есть</i> двигатель. Это <b>композиция</b> (сильная,
+двигатель без машины не нужен) или <b>агрегация</b> (слабая, игрок живёт и без команды).</li>
+<li><b>uses-a («пользуется»)</b> — водитель <i>пользуется</i> машиной. Это
+<b>ассоциация</b>.</li>
+</ul>
+<p>Проверка простая: произнеси связь вслух человеческим предложением. «Машина является
+двигателем» звучит как бред — значит, наследование тут неверное. «У машины есть двигатель» —
+звучит нормально, значит это has-a.</p>
+<p>Запомни главное: <b>плохие программы чаще ломаются не из-за неправильной логики, а из-за
+неправильно выбранных связей между объектами.</b> Ошибку в методе исправляют за минуту,
+ошибку в связях — переписыванием половины проекта.</p>`,
+        code: `// is-a — наследование
+class Animal { }
+class Dog : Animal { }             // Dog ЯВЛЯЕТСЯ Animal
+
+// has-a (сильное) — композиция: часть рождается и умирает вместе с целым
+class Car
+{
+    private readonly Engine _engine = new Engine();   // машина ВЛАДЕЕТ двигателем
+}
+
+// has-a (слабое) — агрегация: части приходят снаружи и живут сами по себе
+class Team
+{
+    private readonly List<Player> _players;
+    public Team(List<Player> players) => _players = players;  // игроки были до команды
+}
+
+// uses-a — ассоциация: попользовался и отпустил
+class Driver
+{
+    public void Drive(Car car) => car.Start();   // не хранит машину у себя
+}`,
+        deep: `<p><b>Глубже:</b> сила связи растёт так: <i>uses-a → агрегация → композиция →
+наследование</i>. Чем связь сильнее, тем меньше свободы у кода потом. Поэтому опытное правило
+звучит так: бери <b>самую слабую связь, которой хватает</b> для задачи. Если хватает передать
+объект параметром — не храни его полем. Если хватает поля — не наследуйся.</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — отношения между объектами", url: "https://refactoring.guru/ru/design-patterns/what-is-pattern" }
+        ],
+        task: {
+          q: "Программист написал <code>class Car : Engine</code>. Что здесь не так?",
+          options: [
+            "Ничего, двигатель — важная часть машины",
+            "Связь названа неверно: машина не «является» двигателем, у неё двигатель есть — нужна композиция",
+            "Нужно было наследовать Engine от Car",
+            "Проблема только в имени класса"
+          ],
+          answer: 1,
+          explain: "Наследование выражает is-a. «Машина является двигателем» — ложь, поэтому правильный вариант: поле Engine внутри Car (has-a)."
+        }
+      },
+      {
+        id: "oop-4",
+        title: "Наследование (is-a)",
+        subtitle: "Общее пишем один раз",
+        theory: `
+<p>У врага, игрока и босса в игре много общего: имя, здоровье, умение получать урон.
+Копировать это в каждый класс — значит трижды чинить один и тот же баг.</p>
+<p><b>Наследование</b> позволяет вынести общее в <b>базовый класс</b>, а наследники получают
+всё это бесплатно и добавляют своё. Пишется двоеточием: <code>class Enemy : Entity</code> —
+«Enemy является Entity».</p>
+<p>Что важно знать:</p>
+<ul>
+<li>В C# у класса может быть <b>только один</b> базовый класс. Интерфейсов — сколько угодно.</li>
+<li>Наследник видит <code>public</code> и <code>protected</code> члены родителя, но не
+<code>private</code>.</li>
+<li><code>protected</code> — это «для своих»: снаружи не видно, наследникам видно.</li>
+</ul>
+<p>И осторожно: глубокие цепочки наследования (класс → класс → класс → класс) становятся
+хрупкими. Меняешь что-то наверху — неожиданно ломается внизу. Два уровня — обычно хватает.</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    protected int Health = 100;               // для своих: видно наследникам
+
+    public void TakeDamage(int amount) => Health -= amount;   // общее поведение
+}
+
+public class Enemy : Entity            // Enemy ЯВЛЯЕТСЯ Entity
+{
+    public int Damage { get; init; } = 10;
+    public void Attack(Entity target) => target.TakeDamage(Damage);
+}
+
+public class Player : Entity           // и Player тоже
+{
+    public void Heal(int amount) => Health += amount;   // Health доступен: protected
+}
+
+var enemy = new Enemy { Name = "Goblin" };
+var hero  = new Player { Name = "Anna" };
+enemy.Attack(hero);            // метод из базового класса работает для обоих`,
+        deep: `<p><b>Глубже:</b> наследование — самая сильная связь в языке: наследник намертво
+привязан к внутреннему устройству родителя. Это называют <i>проблемой хрупкого базового
+класса</i>: безобидное изменение в родителе тихо ломает потомков. Поэтому современный совет —
+<b>«предпочитай композицию наследованию»</b>: наследуйся, только когда is-a действительно
+правда и поведение общее навсегда.</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "MS Learn — protected", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/protected" }
+        ],
+        task: {
+          q: "Что означает модификатор <code>protected</code>?",
+          options: [
+            "Член виден всем, как public",
+            "Член виден только внутри самого класса",
+            "Член виден внутри класса и в классах-наследниках, но не снаружи",
+            "Член нельзя менять после создания объекта"
+          ],
+          answer: 2,
+          explain: "protected — это «private для чужих, public для наследников»: снаружи не достать, а наследник пользуется свободно."
+        }
+      },
+      {
+        id: "oop-5",
+        title: "Ключевое слово base",
+        subtitle: "Позвать родителя на помощь",
+        theory: `
+<p>Иногда наследник не хочет заменять поведение родителя целиком — он хочет <i>дополнить</i>
+его. «Сделай как обычно, а потом ещё вот это».</p>
+<p>Для этого есть слово <code>base</code>. Оно значит «родительская версия»:</p>
+<ul>
+<li><code>base.Describe()</code> — вызвать метод родителя из переопределённого метода;</li>
+<li><code>: base(name)</code> — вызвать <b>конструктор</b> родителя, чтобы он настроил свою
+часть объекта.</li>
+</ul>
+<p>Про конструкторы важно: объект строится <b>снизу вверх</b> — сначала работает конструктор
+базового класса, потом наследника. Если у родителя нет пустого конструктора, наследник
+<b>обязан</b> явно позвать нужный через <code>: base(...)</code>, иначе код не соберётся.</p>`,
+        code: `public class Employee
+{
+    public string Name { get; }
+    public decimal Salary { get; }
+
+    public Employee(string name, decimal salary)   // пустого конструктора нет!
+    {
+        Name = name;
+        Salary = salary;
+    }
+
+    public virtual string Describe() => $"{Name}, зарплата {Salary}";
+}
+
+public class Manager : Employee
+{
+    public int TeamSize { get; }
+
+    // сначала родитель настроит Name и Salary, потом мы — TeamSize
+    public Manager(string name, decimal salary, int teamSize)
+        : base(name, salary)
+    {
+        TeamSize = teamSize;
+    }
+
+    // не переписываем родителя, а дополняем его
+    public override string Describe()
+        => base.Describe() + $", команда: {TeamSize} чел.";
+}
+
+Console.WriteLine(new Manager("Anna", 3000, 5).Describe());
+// Anna, зарплата 3000, команда: 5 чел.`,
+        deep: `<p><b>Глубже:</b> есть коварная деталь — не вызывай <code>virtual</code>-методы из
+конструктора базового класса. В этот момент конструктор наследника ещё <i>не отработал</i>,
+но вызовется уже его переопределённая версия — и увидит неинициализированные поля (нули и
+<code>null</code>). Баг из тех, что ищут полдня.</p>`,
+        links: [
+          { label: "MS Learn — base", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/base" },
+          { label: "MS Learn — Constructors", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors" }
+        ],
+        task: {
+          kind: "write",
+          q: "У класса <code>Employee</code> есть только конструктор <code>Employee(string name)</code>. Напиши конструктор наследника <code>Manager(string name)</code>, который передаёт имя родителю.",
+          placeholder: "public Manager(string name) ...",
+          must: ["base(name)"],
+          solution: `public Manager(string name) : base(name)
+{
+    // здесь — своя часть настройки
+}`,
+          explain: "Если у родителя нет конструктора без параметров, наследник обязан явно позвать подходящий через : base(...). Родитель настраивает свою часть объекта первым."
+        }
+      },
+      {
+        id: "oop-6",
+        title: "Ассоциация (uses-a)",
+        subtitle: "Попользовался и отпустил",
+        theory: `
+<p>Учитель пользуется доской. Доска ему не принадлежит, она висит в кабинете и переживёт
+любого учителя. Они просто встретились на время урока.</p>
+<p><b>Ассоциация</b> — самая слабая связь: объект <i>получает другой объект на время</i>,
+обычно параметром метода, и не хранит его у себя. Владения нет, времени жизни он не
+контролирует.</p>
+<p>Зачем это нужно:</p>
+<ul>
+<li>объекты остаются <b>независимыми</b> — их легко переиспользовать;</li>
+<li>класс легко тестировать: подсунул другую доску — и всё;</li>
+<li>нет жёсткой сцепки, когда «тронешь одно — посыплется всё».</li>
+</ul>
+<p>Признак ассоциации в коде очень простой: <b>объект приходит параметром, а не лежит
+полем.</b></p>`,
+        code: `public class Whiteboard
+{
+    public void Write(string text) => Console.WriteLine($"[доска] {text}");
+}
+
+public class Teacher
+{
+    public string Name { get; init; } = "";
+
+    // доска приходит на время урока и уходит — это ассоциация
+    public void Teach(Whiteboard board, string topic)
+    {
+        board.Write($"{topic} — урок ведёт {Name}");
+    }
+}
+
+var board = new Whiteboard();          // доска существует сама по себе
+var anna  = new Teacher { Name = "Anna" };
+var bob   = new Teacher { Name = "Bob" };
+
+anna.Teach(board, "ООП");              // одной доской пользуются оба
+bob.Teach(board, "LINQ");`,
+        deep: `<p><b>Глубже:</b> именно на ассоциации держится <i>внедрение зависимостей</i>
+(dependency injection). Класс не создаёт себе помощников через <code>new</code>, а получает
+их снаружи — параметром метода или конструктора. Тогда в тестах ему можно подсунуть
+поддельную версию, а в бою — настоящую, и сам класс переписывать не придётся.</p>`,
+        links: [
+          { label: "MS Learn — Dependency injection", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection" },
+          { label: "MS Learn — Methods & parameters", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods" }
+        ],
+        task: {
+          q: "Как отличить ассоциацию (uses-a) от композиции (has-a) прямо в коде?",
+          options: [
+            "По имени класса",
+            "При ассоциации объект приходит параметром и не хранится, при композиции — лежит полем и принадлежит владельцу",
+            "Ассоциация всегда пишется через интерфейс",
+            "Разницы нет, это одно и то же"
+          ],
+          answer: 1,
+          explain: "Параметр = временное пользование (uses-a). Поле, созданное и принадлежащее классу = владение (has-a, композиция)."
+        }
+      },
+      {
+        id: "oop-7",
+        title: "Агрегация (слабое has-a)",
+        subtitle: "Часть есть, но она живёт своей жизнью",
+        theory: `
+<p>В команде есть игроки. Команда распалась — игроки никуда не делись, они просто перешли в
+другие команды. Игрок существовал <i>до</i> команды и переживёт её.</p>
+<p><b>Агрегация</b> — это «у меня есть эта штука, но она не моя». Объект хранит другой объект
+полем, но <b>не создаёт его и не отвечает за его жизнь</b>. Части приходят снаружи, обычно
+через конструктор.</p>
+<p>Типичные примеры:</p>
+<ul>
+<li>Команда → игроки</li>
+<li>Отдел → сотрудники</li>
+<li>Библиотека → книги (книга не исчезает, если библиотеку закрыли)</li>
+</ul>
+<p>Смысл в переиспользовании: одна и та же деталь может принадлежать нескольким владельцам,
+переходить между ними и жить дальше, когда владельца не стало.</p>`,
+        code: `public class Player
+{
+    public string Name { get; init; } = "";
+}
+
+public class Team
+{
+    private readonly List<Player> _players;
+
+    // игроки приходят СНАРУЖИ — команда их не создаёт
+    public Team(List<Player> players) => _players = players;
+
+    public void PrintRoster()
+    {
+        foreach (var p in _players) Console.WriteLine(p.Name);
+    }
+}
+
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+var team = new Team(new List<Player> { anna, bob });
+team.PrintRoster();
+
+team = null;                 // команды больше нет...
+Console.WriteLine(anna.Name); // ...а Anna жива и может играть за другую команду`,
+        deep: `<p><b>Глубже:</b> у агрегации есть подводный камень — <i>общее состояние</i>. Если
+один и тот же игрок лежит в двух командах, изменение из одной команды увидят обе. Иногда это
+именно то, что нужно; иногда — источник загадочных багов. Если хочется независимости, отдавай
+наружу копию списка (<code>_players.ToList()</code>) или <code>IReadOnlyList</code>, чтобы
+чужой код не менял твою коллекцию.</p>`,
+        links: [
+          { label: "MS Learn — Collections", url: "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/list-collection" },
+          { label: "MS Learn — IReadOnlyList", url: "https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1" }
+        ],
+        task: {
+          q: "Чем агрегация отличается от композиции?",
+          options: [
+            "Ничем, это синонимы",
+            "При агрегации часть приходит снаружи и живёт независимо, при композиции — создаётся владельцем и умирает вместе с ним",
+            "Агрегация возможна только для коллекций",
+            "Композиция всегда через интерфейс, агрегация — через класс"
+          ],
+          answer: 1,
+          explain: "Ключ — время жизни и владение: игрок переживёт команду (агрегация), а комната не переживёт дом (композиция)."
+        }
+      },
+      {
+        id: "oop-8",
+        title: "Композиция (сильное has-a)",
+        subtitle: "Часть рождается и умирает вместе с целым",
+        theory: `
+<p>В доме есть комнаты. Снесли дом — комнат больше нет. Комната не может «перейти в другой
+дом»: она существует только как часть этого.</p>
+<p><b>Композиция</b> — сильное владение: объект <b>сам создаёт</b> свои части и полностью
+отвечает за них. Наружу они обычно не отдаются, снаружи не подставляются.</p>
+<p>Типичные примеры: дом → комнаты, машина → двигатель, заказ → строки заказа.</p>
+<p>И самое главное: <b>композиция — это современная замена наследованию</b>. Вместо «стать
+чем-то» объект «имеет что-то» и передаёт работу внутрь. Такой код гнётся, а не ломается:
+захотел другое поведение — подставил другую деталь, а не выдумал новый класс-наследник.</p>`,
+        code: `public class Engine
+{
+    public void Start() => Console.WriteLine("Двигатель запущен");
+}
+
+public class Car
+{
+    // машина САМА создаёт двигатель и владеет им
+    private readonly Engine _engine = new Engine();
+
+    public void Start()
+    {
+        _engine.Start();            // делегируем работу своей части
+        Console.WriteLine("Поехали");
+    }
+}
+
+var car = new Car();
+car.Start();
+// снаружи до _engine не добраться: он часть машины, а не отдельная вещь
+
+// car уходит в мусор — двигатель уходит вместе с ним`,
+        deep: `<p><b>Глубже:</b> композицию часто путают с наследованием, потому что снаружи
+результат похож: у <code>Car</code> появляется метод <code>Start()</code>. Разница в том,
+<i>откуда</i> он взялся. При наследовании поведение прибито к типу навсегда. При композиции
+деталь можно заменить — хоть в момент работы программы. Отсюда растёт паттерн Strategy: класс
+хранит поведение объектом и меняет его на лету.</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — Strategy", url: "https://refactoring.guru/ru/design-patterns/strategy" }
+        ],
+        task: {
+          kind: "write",
+          q: "Напиши класс <code>House</code>, который ВЛАДЕЕТ комнатой: приватное поле <code>_room</code> типа <code>Room</code>, создаваемое самим классом.",
+          placeholder: "public class House ...",
+          must: ["private", "_room=newroom()"],
+          solution: `public class House
+{
+    private readonly Room _room = new Room();   // дом сам создаёт комнату
+}`,
+          explain: "Часть создаётся внутри владельца и не приходит снаружи — это и есть композиция: нет дома, нет и комнаты."
+        }
+      },
+      {
+        id: "oop-9",
+        title: "Обобщение (generalization)",
+        subtitle: "Заметил повтор — вынеси наверх",
+        theory: `
+<p>У машины есть колёса и она умеет ехать. У велосипеда — тоже. У грузовика — тоже.
+Копировать одно и то же в три класса скучно и опасно.</p>
+<p><b>Обобщение</b> — это процесс: смотришь на несколько похожих классов, находишь общее и
+вытаскиваешь его в общего родителя. Получается <code>Vehicle</code>, а <code>Car</code> и
+<code>Bike</code> становятся его частными случаями.</p>
+<p>Обобщение — это обратная сторона наследования. Наследование — <i>результат</i>
+(«Car is-a Vehicle»), обобщение — <i>путь</i>, которым к нему приходят: снизу вверх, от
+конкретного к общему.</p>
+<p>Важный момент: обобщать надо <b>по факту повтора</b>, а не заранее. Сначала пишешь два-три
+конкретных класса, видишь настоящее общее — и только тогда выносишь. Родители, придуманные
+заранее «на будущее», почти всегда оказываются неудобными.</p>`,
+        code: `// Было: два класса с одинаковыми кусками
+// class Car  { public int Wheels = 4; public void Move() {...} }
+// class Bike { public int Wheels = 2; public void Move() {...} }
+
+// Стало: общее вынесено наверх
+public abstract class Vehicle
+{
+    public int Wheels { get; protected set; }
+    public virtual void Move() => Console.WriteLine("Транспорт едет");
+}
+
+public class Car : Vehicle
+{
+    public Car() => Wheels = 4;
+    public override void Move() => Console.WriteLine("Машина едет на бензине");
+}
+
+public class Bike : Vehicle
+{
+    public Bike() => Wheels = 2;
+    public override void Move() => Console.WriteLine("Велосипед едет на педалях");
+}
+
+Vehicle[] garage = { new Car(), new Bike() };
+foreach (var v in garage) v.Move();   // каждый едет по-своему`,
+        deep: `<p><b>Глубже:</b> есть ловушка — <i>ложное обобщение</i>. Два класса могут случайно
+иметь похожие поля, не будучи родственниками. Скидка на товар и скидка сотруднику обе имеют
+<code>Percent</code>, но общий базовый класс <code>Discount</code> тут только свяжет по рукам:
+завтра правила разойдутся, и придётся распутывать. Общий <i>смысл</i> важнее общих полей.</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "Refactoring Guru — Extract Superclass", url: "https://refactoring.guru/ru/extract-superclass" }
+        ],
+        task: {
+          q: "Что такое обобщение (generalization)?",
+          options: [
+            "Превращение класса в дженерик с параметром T",
+            "Вынесение общих признаков нескольких классов в общий родительский класс",
+            "Удаление лишних методов из класса",
+            "Замена классов интерфейсами"
+          ],
+          answer: 1,
+          explain: "Generalization — это движение снизу вверх: находим повторяющееся у нескольких классов и делаем из него базовый класс. С дженериками это никак не связано."
+        }
+      },
+      {
+        id: "oop-10",
+        title: "Абстрактные классы",
+        subtitle: "Заготовка, из которой нельзя сделать вещь",
+        theory: `
+<p>«Фигура» — это не вещь. Нарисовать можно круг или квадрат, а просто «фигуру» — нельзя.
+Но у всех фигур есть общее: площадь, цвет, метод рисования.</p>
+<p><b>Абстрактный класс</b> — это класс, из которого <b>нельзя создать объект</b>
+(<code>new Shape()</code> не соберётся), но от которого можно наследоваться. Он совмещает
+две вещи:</p>
+<ul>
+<li><b>готовый общий код</b> — обычные методы и поля, которые наследники получают даром;</li>
+<li><b>обязательства</b> — <code>abstract</code>-члены без тела: наследник <i>обязан</i> их
+реализовать, иначе не соберётся.</li>
+</ul>
+<p>Это отличие от интерфейса: интерфейс — только обязательства без кода, абстрактный класс —
+обязательства <i>плюс</i> общий код. Берёшь абстрактный класс, когда у родственных классов
+есть общая реализация, которую жалко копировать.</p>`,
+        code: `public abstract class Shape
+{
+    public string Color { get; init; } = "black";
+
+    // обязательство: тела нет, наследник ОБЯЗАН написать своё
+    public abstract double Area();
+
+    // общий готовый код: достаётся всем наследникам бесплатно
+    public void Describe()
+        => Console.WriteLine($"{GetType().Name} ({Color}), площадь {Area():0.00}");
+}
+
+public class Circle : Shape
+{
+    public double Radius { get; init; }
+    public override double Area() => Math.PI * Radius * Radius;
+}
+
+public class Rect : Shape
+{
+    public double W { get; init; }
+    public double H { get; init; }
+    public override double Area() => W * H;
+}
+
+// var s = new Shape();          // ОШИБКА компиляции: абстрактный класс
+Shape[] shapes = { new Circle { Radius = 2 }, new Rect { W = 3, H = 4 } };
+foreach (var s in shapes) s.Describe();`,
+        deep: `<p><b>Глубже:</b> <code>abstract</code> и <code>virtual</code> легко перепутать.
+<code>virtual</code> — «у меня есть рабочая версия, можешь заменить». <code>abstract</code> —
+«версии нет вовсе, ты обязан написать». Абстрактный член бывает только в абстрактном классе:
+иначе можно было бы создать объект с дыркой вместо метода.</p>`,
+        links: [
+          { label: "MS Learn — abstract", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/abstract" },
+          { label: "MS Learn — Abstract and sealed classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/abstract-and-sealed-classes-and-class-members" }
+        ],
+        task: {
+          q: "В чём разница между <code>abstract</code> и <code>virtual</code> методом?",
+          options: [
+            "Никакой, это синонимы",
+            "abstract не имеет тела и обязателен к реализации, virtual имеет рабочее тело и переопределяется по желанию",
+            "virtual можно объявлять только в интерфейсах",
+            "abstract работает быстрее"
+          ],
+          answer: 1,
+          explain: "abstract — обязательство без реализации, virtual — реализация по умолчанию, которую наследник может, но не обязан заменить."
+        }
+      },
+      {
+        id: "oop-11",
+        title: "Полиморфизм",
+        subtitle: "Одна команда — разное поведение",
+        theory: `
+<p>Скажи классу «беги» — человек побежит ногами, птица полетит, рыба поплывёт. Команда одна,
+исполнение разное. Это и есть <b>полиморфизм</b> («много форм»).</p>
+<p>В C# он работает так:</p>
+<ul>
+<li>в базовом классе метод помечают <code>virtual</code> — «эту версию можно заменить»;</li>
+<li>в наследнике пишут <code>override</code> — своя версия;</li>
+<li>переменная может иметь тип родителя, но <b>решает всегда настоящий тип объекта</b> — и
+решает это <i>во время работы программы</i>, а не при компиляции.</li>
+</ul>
+<p>Зачем это нужно: код, который перебирает массив <code>Entity[]</code>, ничего не знает про
+боссов и игроков. Завтра добавишь новый тип врага — этот код <b>трогать не придётся</b>. Вот
+ради этого ООП и затевалось.</p>
+<p>Есть ещё <code>sealed override</code> — «я переопределил, и дальше менять запрещено». Так
+фиксируют поведение, на которое нельзя влиять.</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    public virtual void Update() => Console.WriteLine($"{Name} стоит");
+}
+
+public class Enemy : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} ищет игрока");
+}
+
+public class Player : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} слушает клавиши");
+}
+
+public class Boss : Enemy
+{
+    // sealed: дальше эту версию переопределить уже нельзя
+    public sealed override void Update() => Console.WriteLine($"{Name} готовит удар");
+}
+
+Entity[] world = { new Player { Name = "Anna" },
+                   new Enemy  { Name = "Goblin" },
+                   new Boss   { Name = "Dragon" } };
+
+foreach (var e in world)
+    e.Update();     // тип переменной — Entity, а работает версия НАСТОЯЩЕГО типа
+
+// Anna слушает клавиши / Goblin ищет игрока / Dragon готовит удар`,
+        deep: `<p><b>Глубже:</b> как это устроено внутри — у каждого типа есть таблица виртуальных
+методов (<i>v-table</i>), маленький список «какой метод на самом деле вызывать». Поэтому
+вызов решается в момент работы программы. Плата за это — один лишний прыжок по указателю,
+цена копеечная. А вот <code>new</code> вместо <code>override</code> — не полиморфизм, а
+<i>сокрытие</i>: там выбор делается по типу переменной, и результат почти всегда неожиданный.
+Помечай <code>override</code>, если хочешь настоящее замещение.</p>`,
+        links: [
+          { label: "MS Learn — Polymorphism", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism" },
+          { label: "MS Learn — virtual / override", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/virtual" }
+        ],
+        task: {
+          kind: "write",
+          q: "В базовом классе есть <code>public virtual void Update()</code>. Напиши в наследнике свою версию этого метода так, чтобы работал именно он (настоящее переопределение, а не сокрытие).",
+          placeholder: "public ... void Update() ...",
+          must: ["overridevoidupdate()"],
+          solution: `public override void Update()
+{
+    Console.WriteLine("Своя логика наследника");
+}`,
+          explain: "Только override даёт настоящий полиморфизм: вызов решается по реальному типу объекта. Слово new вместо него лишь спрятало бы метод родителя."
+        }
+      },
+      {
+        id: "oop-12",
+        title: "Интерфейсы и абстракция",
+        subtitle: "Контракт: что уметь, а не как",
+        theory: `
+<p>В розетку можно воткнуть чайник, лампу или зарядку. Розетке всё равно, что внутри
+устройства — важно, что у него есть подходящая вилка. Вилка — это <b>контракт</b>.</p>
+<p><b>Интерфейс</b> — список того, что класс <i>обязан уметь</i>, без единой строчки о том,
+<i>как</i> он это делает. Классы «подписывают контракт» словом <code>:</code> и пишут свою
+реализацию. Имена интерфейсов по традиции начинаются с <code>I</code>.</p>
+<p>А <b>абстракция</b> — это и есть привычка работать с контрактами вместо конкретных
+классов. Код зависит от <code>IRepository</code>, а лежит за ним база данных, файл или
+подделка для теста — коду всё равно.</p>
+<p>Зачем:</p>
+<ul>
+<li><b>развязка</b> — меняешь реализацию, не трогая тех, кто ей пользуется;</li>
+<li><b>тесты</b> — легко подсунуть поддельную реализацию;</li>
+<li><b>гибкость</b> — класс может реализовать <b>сколько угодно</b> интерфейсов, хотя
+базовый класс у него только один.</li>
+</ul>`,
+        code: `public interface IRenderable      // контракт: умею рисоваться
+{
+    void Render();
+}
+
+public interface IUpdatable       // контракт: умею обновляться
+{
+    void Update();
+}
+
+// один класс — несколько контрактов сразу
+public class Player : IRenderable, IUpdatable
+{
+    public void Render() => Console.WriteLine("рисую игрока");
+    public void Update() => Console.WriteLine("двигаю игрока");
+}
+
+public class Rock : IRenderable   // камень только рисуется
+{
+    public void Render() => Console.WriteLine("рисую камень");
+}
+
+// код работает с контрактом и не знает про конкретные классы
+List<IRenderable> scene = new() { new Player(), new Rock() };
+foreach (var item in scene) item.Render();`,
+        deep: `<p><b>Глубже:</b> когда брать интерфейс, а когда абстрактный класс? Интерфейс — про
+<i>умение</i> («умеет рисоваться»), его получают классы из разных семейств. Абстрактный класс
+— про <i>родство</i> («это фигура») плюс общий код. Правило на практике: начинай с интерфейса,
+а абстрактный класс добавляй, когда появился общий код, который жалко копировать. И держи
+интерфейсы маленькими: <code>IRenderable</code> с одним методом полезнее, чем
+<code>IEverything</code> с двадцатью.</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces" },
+          { label: "MS Learn — Interfaces vs abstract classes", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "Почему класс может реализовать много интерфейсов, но наследоваться только от одного класса?",
+          options: [
+            "Так решили ради красоты синтаксиса",
+            "Интерфейсы задают только контракт без реализации, поэтому конфликтовать нечему; у классов же может быть спорная реализация одного метода",
+            "Интерфейсы работают быстрее классов",
+            "На самом деле в C# можно наследовать несколько классов"
+          ],
+          answer: 1,
+          explain: "Множественное наследование классов рождает вопрос «чью реализацию брать?». У интерфейсов реализации нет — брать нечего, конфликта не возникает."
+        }
+      },
+      {
+        id: "oop-13",
+        title: "Что можно объявить в интерфейсе",
+        subtitle: "Список разрешённого и запрещённого",
+        theory: `
+<p>Интерфейс описывает <i>умения</i>, а не устройство. Отсюда и вытекает, что в него можно
+класть, а что нельзя.</p>
+<p><b>Можно:</b></p>
+<ul>
+<li><b>методы</b> — самое частое: подпись без тела;</li>
+<li><b>свойства</b> — с <code>get</code>, <code>set</code> или обоими;</li>
+<li><b>события</b> — для подписки/оповещения;</li>
+<li><b>индексаторы</b> — обращение как к массиву: <code>obj[0]</code>.</li>
+</ul>
+<p><b>Нельзя:</b></p>
+<ul>
+<li><b>поля</b> — интерфейс не хранит данные, он про поведение;</li>
+<li><b>конструкторы</b> — интерфейс не управляет созданием объектов;</li>
+<li><b>деструкторы</b>;</li>
+<li><b>модификаторы доступа</b> — всё и так публично, писать <code>public</code> незачем;</li>
+<li><b>статические члены</b> — за одним исключением: <code>static abstract</code> из C# 11,
+для обобщённой математики.</li>
+</ul>`,
+        code: `public interface IStorage
+{
+    // метод — подпись без тела
+    void Save(string data);
+
+    // свойство
+    int Count { get; }
+
+    // событие
+    event Action<string> Saved;
+
+    // индексатор
+    string this[int index] { get; }
+
+    // private int _size;              // ОШИБКА: полей нет
+    // public IStorage() { }           // ОШИБКА: конструкторов нет
+    // public void Save(string d);     // ОШИБКА: модификатор лишний
+}
+
+public class MemoryStorage : IStorage
+{
+    private readonly List<string> _items = new();   // поле живёт в КЛАССЕ
+
+    public int Count => _items.Count;
+    public string this[int index] => _items[index];
+    public event Action<string>? Saved;
+
+    public void Save(string data)
+    {
+        _items.Add(data);
+        Saved?.Invoke(data);
+    }
+}`,
+        deep: `<p><b>Глубже:</b> с C# 8 у интерфейсов появились <i>методы с реализацией по
+умолчанию</i> (default interface methods). Это сделали не для удобства, а чтобы можно было
+дописать метод в опубликованный интерфейс, не сломав всех, кто его уже реализовал. Пользуйся
+этим редко: если реализации становится много, это уже не контракт, а абстрактный класс,
+только переодетый.</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/interface" },
+          { label: "MS Learn — Default interface methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/interface-implementation/default-interface-methods-versions" }
+        ],
+        task: {
+          q: "Что из перечисленного НЕЛЬЗЯ объявить в интерфейсе?",
+          options: [
+            "Метод без тела",
+            "Свойство с get и set",
+            "Поле для хранения данных",
+            "Событие"
+          ],
+          answer: 2,
+          explain: "Интерфейс не хранит данные — полей в нём нет. Методы, свойства, события и индексаторы объявлять можно."
+        }
+      },
+      {
+        id: "oop-14",
+        title: "Проблема ромба",
+        subtitle: "Почему нельзя наследовать два класса",
+        theory: `
+<p>Представь: класс <b>A</b> умеет <code>DoWork()</code>. Классы <b>B</b> и <b>C</b>
+наследуются от A и каждый переписывает <code>DoWork()</code> по-своему. Теперь класс <b>D</b>
+хочет унаследовать сразу B и C. Вопрос: чей <code>DoWork()</code> он получит — от B или от
+C?</p>
+<p>Ответа нет. Схема наследования на картинке похожа на ромб, поэтому это и называют
+<b>проблемой ромба</b> (diamond problem). Именно из-за неё C# <b>запрещает наследовать
+больше одного класса</b>: лучше без этой возможности, чем с непредсказуемым кодом.</p>
+<p>Замена — интерфейсы. У них нет реализации, значит спорить не о чем: сколько бы интерфейсов
+класс ни реализовал, тело метода всё равно пишет он сам, в одном месте.</p>
+<p>А если два интерфейса требуют метод с одинаковым именем, но разным смыслом? Тогда есть
+<b>явная реализация</b>: пишешь <code>void IFile.Save()</code> с именем интерфейса впереди.
+Такой метод виден только через этот интерфейс — путаницы не будет.</p>`,
+        code: `// Так НЕЛЬЗЯ: class D : B, C  → компилятор не пропустит
+
+public interface IFile
+{
+    void Save();      // сохранить в файл
+}
+
+public interface ICloud
+{
+    void Save();      // сохранить в облако — то же имя, другой смысл
+}
+
+public class Document : IFile, ICloud
+{
+    // явная реализация: у каждого контракта своя версия
+    void IFile.Save()  => Console.WriteLine("сохраняю на диск");
+    void ICloud.Save() => Console.WriteLine("отправляю в облако");
+
+    // обычный метод класса — для повседневного использования
+    public void Save() => Console.WriteLine("сохраняю по умолчанию");
+}
+
+var doc = new Document();
+doc.Save();                    // сохраняю по умолчанию
+((IFile)doc).Save();           // сохраняю на диск
+((ICloud)doc).Save();          // отправляю в облако`,
+        deep: `<p><b>Глубже:</b> явная реализация полезна ещё и как способ <i>убрать метод с глаз
+долой</i>. Например, коллекция реализует устаревший <code>IEnumerable.GetEnumerator()</code>
+явно, чтобы в подсказках редактора висела только современная типизированная версия. Минус:
+чтобы позвать явный метод, объект приходится приводить к интерфейсу — для <code>struct</code>
+это ещё и упаковка (boxing).</p>`,
+        links: [
+          { label: "MS Learn — Explicit interface implementation", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/interfaces/explicit-interface-implementation" },
+          { label: "MS Learn — Why no multiple inheritance", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "Класс реализует IFile и ICloud, и в обоих есть метод Save() с разным смыслом. Как дать каждому свою реализацию?",
+          options: [
+            "Никак, придётся переименовать метод в одном из интерфейсов",
+            "Написать явную реализацию: void IFile.Save() и void ICloud.Save()",
+            "Сделать оба метода virtual",
+            "Унаследовать класс от обоих интерфейсов как от классов"
+          ],
+          answer: 1,
+          explain: "Явная реализация привязывает метод к конкретному интерфейсу. Вызвать его можно только через приведение к этому интерфейсу — двусмысленности не остаётся."
+        }
+      },
+      {
+        id: "oop-15",
+        title: "Типичные ошибки в связях",
+        subtitle: "Три способа испортить проект",
+        theory: `
+<p>Разберём три реальные ошибки, из-за которых проекты становятся неподвижными.</p>
+<p><b>1. Наследование вместо композиции.</b> <code>class Car : Engine</code>. Машина не
+является двигателем — связь выдумана. Итог: машина навсегда прибита к одному типу двигателя,
+электрическую не сделать.</p>
+<p><b>2. Взрыв классов.</b> Нужны уведомления: письмом, пуш-сообщением, срочные,
+отложенные. Начинают плодить <code>EmailNotification</code>,
+<code>UrgentEmailNotification</code>, <code>DelayedPushNotification</code>… А что делать с
+«срочным пушем с задержкой»? Каждое новое свойство <b>умножает</b> число классов. Лечится
+композицией: канал доставки хранится объектом и подставляется.</p>
+<p><b>3. Композиция там, где хватает ассоциации.</b> <code>Driver</code> хранит машину полем.
+Теперь водитель привязан к одной конкретной машине навсегда: пересесть не может, в тесте не
+подменить. А хватило бы параметра метода.</p>
+<p>Общий вывод один: <b>бери самую слабую связь, которой хватает.</b></p>`,
+        code: `// ---------- ОШИБКА: взрыв классов ----------
+// class EmailNotification { }
+// class UrgentEmailNotification : EmailNotification { }
+// class DelayedPushNotification : PushNotification { }   // и так до бесконечности
+
+// ---------- ПРАВИЛЬНО: композиция + подстановка поведения ----------
+public interface IChannel
+{
+    void Send(string text);
+}
+
+public class EmailChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"письмо: {text}");
+}
+
+public class PushChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"пуш: {text}");
+}
+
+public class Notification
+{
+    private readonly IChannel _channel;         // канал ХРАНИТСЯ, а не наследуется
+    public bool IsUrgent { get; init; }
+
+    public Notification(IChannel channel) => _channel = channel;
+
+    public void Send(string text)
+        => _channel.Send(IsUrgent ? "СРОЧНО! " + text : text);
+}
+
+new Notification(new PushChannel()) { IsUrgent = true }.Send("сервер упал");
+// срочный пуш — и ни одного нового класса`,
+        deep: `<p><b>Глубже:</b> взрыв классов — это признак того, что признаки <i>перемножаются</i>
+(канал × срочность × задержка = 8 классов, а с четвёртым признаком уже 16). Наследование
+складывать не умеет — оно даёт одну ветку. Композиция умеет: каждое свойство становится
+отдельной деталью, и они свободно комбинируются. Отсюда и совет «предпочитай композицию
+наследованию» — он не про красоту, а про арифметику.</p>`,
+        links: [
+          { label: "Refactoring Guru — Replace Inheritance with Delegation", url: "https://refactoring.guru/ru/replace-inheritance-with-delegation" },
+          { label: "MS Learn — Inheritance vs composition", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" }
+        ],
+        task: {
+          q: "Класс Driver хранит Car полем в конструкторе и водит только его. Что здесь стоит поменять?",
+          options: [
+            "Ничего, так правильно",
+            "Наследовать Driver от Car",
+            "Передавать Car параметром метода Drive(Car car) — водителю хватает ассоциации, владеть машиной ему не нужно",
+            "Сделать поле public"
+          ],
+          answer: 2,
+          explain: "Владение здесь лишнее: водитель просто пользуется машиной. Параметр метода даёт свободу — можно сесть за любую машину и легко подставить другую в тестах."
+        }
+      },
+      {
+        id: "oop-16",
+        title: "Методы расширения",
+        subtitle: "Дописать метод к чужому классу",
+        theory: `
+<p>Тебе нужен у <code>string</code> метод <code>ToSlug()</code>, превращающий «Привет Мир» в
+«привет-мир». Но <code>string</code> написан в Microsoft, залезть внутрь нельзя, а
+наследоваться от него запрещено.</p>
+<p><b>Метод расширения</b> решает это: ты пишешь метод <i>снаружи</i>, а вызываешь так, будто
+он всегда был в классе. Правила простые и их всего четыре:</p>
+<ol>
+<li>класс должен быть <code>static</code>;</li>
+<li>метод должен быть <code>static</code>;</li>
+<li>первый параметр помечается словом <code>this</code> — это и есть тот тип, который
+расширяем;</li>
+<li><code>this</code> бывает только у первого параметра.</li>
+</ol>
+<p>Никакой магии тут нет: компилятор просто переписывает <code>text.ToSlug()</code> в
+<code>StringExtensions.ToSlug(text)</code>. Это <i>синтаксический сахар</i> — то есть более
+приятная запись того же самого вызова.</p>
+<p>Именно на этом построен весь LINQ: <code>Where</code>, <code>Select</code>,
+<code>OrderBy</code> — обычные методы расширения для <code>IEnumerable&lt;T&gt;</code>.</p>`,
+        code: `public static class StringExtensions      // 1) класс static
+{
+    // 2) метод static   3) первый параметр с this
+    public static string ToSlug(this string text)
+        => text.Trim().ToLower().Replace(" ", "-");
+
+    public static bool IsBlank(this string? text)
+        => string.IsNullOrWhiteSpace(text);
+}
+
+// Было бы так:
+var a = StringExtensions.ToSlug("Привет Мир");
+
+// А можно так — будто метод всегда был у string:
+var b = "Привет Мир".ToSlug();       // привет-мир
+
+if ("   ".IsBlank()) Console.WriteLine("пустая строка");
+
+// LINQ — это ровно то же самое, методы расширения для IEnumerable<T>
+var evens = new[] { 1, 2, 3, 4 }.Where(x => x % 2 == 0);`,
+        deep: `<p><b>Глубже:</b> у расширений есть цена. Они <b>не видят private-членов</b> — снаружи
+класса доступно только публичное, поэтому настоящим ООП это не является. Их легко «спрятать»:
+метод живёт в чужом файле, и найти его глазами трудно (спасает <code>using</code> нужного
+пространства имён — без него метод просто не появится). И приятная деталь: расширение
+спокойно вызывается на <code>null</code>, ведь это обычный статический метод — на этом
+построены проверки вроде <code>IsBlank()</code>.</p>`,
+        links: [
+          { label: "MS Learn — Extension methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "MS Learn — LINQ", url: "https://learn.microsoft.com/en-us/dotnet/csharp/linq/" }
+        ],
+        task: {
+          kind: "write",
+          q: "Напиши метод расширения <code>Shout()</code> для <code>string</code>, который возвращает строку в верхнем регистре. Достаточно одной строки-сигнатуры с телом.",
+          placeholder: "public static string Shout(...)",
+          must: ["staticstringshout(thisstring"],
+          solution: `public static class StringExtensions
+{
+    public static string Shout(this string text) => text.ToUpper() + "!";
+}
+
+// использование:
+"привет".Shout();   // ПРИВЕТ!`,
+          explain: "Статический класс, статический метод, первый параметр с this — три обязательных условия. Дальше компилятор сам превращает text.Shout() в вызов StringExtensions.Shout(text)."
+        }
+      },
+      {
+        id: "oop-17",
+        title: "Расширения против обычных методов",
+        subtitle: "Кто побеждает и что такое fluent API",
+        theory: `
+<p>Важное правило, на котором спотыкаются даже опытные: <b>настоящий метод класса всегда
+побеждает метод расширения</b>.</p>
+<p>Логика такая: компилятор сначала ищет метод <i>внутри</i> типа. Нашёл — на этом всё,
+расширения он даже не смотрит. И <code>virtual</code>, и <code>override</code>, и спрятанный
+через <code>new</code> метод — все они выигрывают. Расширение подключается <b>только если
+подходящего метода в классе нет вообще</b>.</p>
+<p>Отсюда вывод: расширением нельзя «подменить» поведение чужого класса. Оно только
+дописывает недостающее.</p>
+<p>А ещё расширения любят за <b>fluent API</b> — цепочки вызовов. Секрет прост: если метод
+возвращает сам объект (<code>return this</code> или сам изменённый объект), следующий вызов
+можно приписать сразу за ним. Так читается почти как предложение — именно поэтому LINQ такой
+приятный.</p>`,
+        code: `public class A
+{
+    public void Print() => Console.WriteLine("метод класса A");
+}
+
+public static class Ext
+{
+    public static void Print(this A a) => Console.WriteLine("метод расширения");
+}
+
+new A().Print();          // "метод класса A" — расширение проигрывает всегда
+
+
+// ---------- fluent API: каждый метод возвращает объект ----------
+public class QueryBuilder
+{
+    private readonly List<string> _parts = new();
+
+    public QueryBuilder From(string table)  { _parts.Add($"FROM {table}");  return this; }
+    public QueryBuilder Where(string cond)  { _parts.Add($"WHERE {cond}");  return this; }
+    public QueryBuilder OrderBy(string col) { _parts.Add($"ORDER BY {col}"); return this; }
+
+    public override string ToString() => string.Join(" ", _parts);
+}
+
+var sql = new QueryBuilder()
+    .From("Users")
+    .Where("Age > 18")
+    .OrderBy("Name")
+    .ToString();          // FROM Users WHERE Age > 18 ORDER BY Name`,
+        deep: `<p><b>Глубже:</b> у этого правила есть неприятное следствие для авторов библиотек.
+Если ты выпустил расширение <code>Print()</code>, а потом в самом классе появился настоящий
+<code>Print()</code> — код пользователей молча начнёт вызывать другой метод. Не ошибка
+компиляции, а тихая смена поведения. Поэтому расширениям дают имена поспецифичнее и держат в
+отдельном пространстве имён, которое подключают осознанно.</p>`,
+        links: [
+          { label: "MS Learn — Extension methods (binding rules)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "Martin Fowler — Fluent Interface", url: "https://martinfowler.com/bliki/FluentInterface.html" }
+        ],
+        task: {
+          q: "У класса A есть метод <code>Print()</code>, и написано расширение <code>Print()</code> для A. Что вызовется при <code>new A().Print()</code>?",
+          options: [
+            "Метод расширения — он объявлен позже",
+            "Метод класса A — расширения рассматриваются только когда подходящего метода в классе нет",
+            "Оба по очереди",
+            "Ошибка компиляции: неоднозначный вызов"
+          ],
+          answer: 1,
+          explain: "Компилятор сначала ищет метод в самом типе. Нашёл — расширения он даже не рассматривает. Подменить поведение класса расширением невозможно."
+        }
+      }
+    ]
+  },
   /* ================= WORLD 1: GENERICS ================= */
   {
     id: "generics",
@@ -3037,6 +4159,7 @@ user secrets → переменные окружения → аргументы 
 
 // Порядок миров на сайте (по id). Меняй здесь — контент трогать не нужно.
 const WORLD_ORDER = [
+  "oop",           // ООП: объекты и связи
   "dsa",           // Структуры данных и алгоритмы
   "enumerables",   // Инумерабл
   "delegates",     // Делегаты и события

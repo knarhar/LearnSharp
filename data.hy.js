@@ -6,6 +6,1144 @@
    ===================================================================== */
 (function () {
 const WORLDS = [
+  /* ================= WORLD: OOP ================= */
+  {
+    id: "oop",
+    name: "OOP: Objects & Relationships",
+    icon: "⬢",
+    blurb: "Class-եր, encapsulation, inheritance, polymorphism, interface-ներ և object-երի միջև կապերը — մնացած ամեն ինչի հիմքը։",
+    levels: [
+      {
+        id: "oop-1",
+        title: "Class և object",
+        subtitle: "Թխվածքի կաղապարը և ինքը՝ թխվածքը",
+        theory: `
+<p>Կա թխվածք կտրելու կաղապար, և կա թխվածքը։ Կաղապարը մեկն է, թխվածքները նրանով՝ ինչքան
+ուզես, ու ամեն մեկն իրենն է՝ մեկը շոկոլադով, մյուսը՝ ընկույզով։</p>
+<p><b>Class</b>-ը կաղապարն է։ Նկարագրություն՝ ինչ տվյալներ ունի իրը և ինչ գիտի անել։
+<b>Object</b>-ը կոնկրետ թխվածքն է, պատրաստված այդ կաղապարով։ <code>new</code> բառը հենց
+նշանակում է «սարքիր ինձ ևս մեկ հատ այս օրինակով»։</p>
+<p>Class-ի ներսում ապրում է երկու բան՝</p>
+<ul>
+<li><b>տվյալներ</b> — field-եր և property-ներ (ինչ object-ը <i>գիտի</i>՝ անուն, առողջություն, հաշվեկշիռ)։</li>
+<li><b>վարք</b> — method-եր (ինչ object-ը <i>կարողանում է</i>՝ վազել, վճարել, բարևել)։</li>
+</ul>
+<p>OOP-ի գլխավոր գաղափարը մեկ նախադասությամբ՝ <b>տվյալները և դրանց վրա գործողությունները
+ապրում են միասին</b>, մեկ արկղի մեջ, ոչ թե ցրված ամբողջ ծրագրի վրայով։ Այդ ժամանակ ծրագիրը
+ֆունկցիաների կույտ չէ, այլ object-երի ընկերություն, որոնք շփվում են իրար հետ։</p>`,
+        code: `// Class — կաղապար (նկարագրություն)
+public class Player
+{
+    // տվյալներ՝ ինչ object-ը գիտի
+    public string Name { get; set; }
+    public int Health { get; set; } = 100;
+
+    // վարք՝ ինչ object-ը կարողանում է
+    public void TakeDamage(int amount)
+    {
+        Health -= amount;
+        Console.WriteLine($"{Name} ստացավ {amount}, մնաց {Health}");
+    }
+}
+
+// Object-եր — կոնկրետ օրինակներ, ամեն մեկն իր տվյալներով
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+anna.TakeDamage(30);   // Anna: 70
+bob.TakeDamage(10);    // Bob: 90  — Anna-ի տվյալներին ոչ ոք չի դիպչել`,
+        deep: `<p><b>Ավելի խորը։</b> Class-ի object-ը ապրում է heap-ում, իսկ փոփոխականը պահում է
+միայն <i>հղումը</i> նրա վրա — ինչպես տան հասցեով թղթիկ, ոչ թե ինքը՝ տունը։ Դրա համար եթե գրես
+<code>var b = a;</code>, տունը կմնա մեկը, իսկ թղթիկները կդառնան երկուսը՝ փոխես
+<code>b</code>-ի միջոցով, կտեսնես նաև <code>a</code>-ի միջոցով։ <code>struct</code>-ի մոտ
+վարքն ուրիշ է՝ նա պատճենվում է ամբողջությամբ։</p>`,
+        links: [
+          { label: "MS Learn — Classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes" },
+          { label: "MS Learn — Objects", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/objects" }
+        ],
+        task: {
+          q: "Ի՞նչ տարբերություն կա class-ի և object-ի միջև?",
+          options: [
+            "Սրանք միևնույն բանի երկու անվանումն են",
+            "Class-ը նկարագրություն է (կաղապար), object-ը՝ կոնկրետ օրինակ, ստեղծված այդ նկարագրությամբ",
+            "Object-ը ֆայլ է, իսկ class-ը՝ թղթապանակ",
+            "Class-ը պահում է տվյալները, իսկ object-ը՝ միայն method-երը"
+          ],
+          answer: 1,
+          explain: "Class-ը գրվում է մեկ անգամ, նրանով object-եր կարելի է սարքել ինչքան ուզես, և ամեն մեկը կունենա իր field-երի արժեքները։"
+        }
+      },
+      {
+        id: "oop-2",
+        title: "Encapsulation",
+        subtitle: "Ձեռքով ներս մի մտիր — կոճակներ կան",
+        theory: `
+<p>Բանկոմատը անցք չունի, որի միջով կարելի է ուղղակիորեն դիպչել փողին։ Կան կոճակներ՝ «հանել»,
+«դնել»։ Բանկոմատն ինքն է որոշում՝ կարելի՞ է կատարել խնդրանքը։</p>
+<p><b>Encapsulation</b>-ը հենց սա է՝ թաքցնել տվյալները object-ի ներսում և դուրս հանել միայն
+անվտանգ «կոճակները»։ Field-երը դարձնում ենք <code>private</code>, իսկ մուտքը տալիս ենք
+property-ների և method-երի միջոցով, որտեղ կարելի է <b>ստուգել</b>, որ հարցումը խելամիտ է։</p>
+<p>Ինչու՞ այդպես, եթե կարելի է պարզապես field-ը դարձնել <code>public</code>։ Նրա համար, որ
+public field-ը ցանկացած մեկը կարող է փչացնել — օրինակ՝ հաշվեկշռի մեջ գրել մինուս միլիոն։ Եվ
+այդ ժամանակ մեղավորը կլինի ոչ թե նա, ով փչացրեց, այլ քո class-ը, որովհետև հենց նա պետք է
+թույլ չտար այդպիսի վիճակ։</p>
+<p>Կանոնը պարզ է՝ <b>object-ը պարտավոր է միշտ ճիշտ վիճակում լինել</b>։ Ստուգումները ապրում են
+class-ի ներսում, ոչ թե ցրված ամբողջ ծրագրի վրայով։</p>`,
+        code: `// ՎԱՏ՝ տվյալները բաց են, ցանկացած մեկը կարող է կոտրել
+public class BadAccount
+{
+    public decimal Balance;      // ով ասես՝ acc.Balance = -1000;
+}
+
+// ԼԱՎ՝ field-ը թաքցված է, մուտքը՝ ստուգում ունեցող կոճակների միջոցով
+public class BankAccount
+{
+    private decimal _balance;                    // դրսից ոչ ոք չի հասնի
+
+    public decimal Balance => _balance;          // միայն ընթերցում
+
+    public void Deposit(decimal amount)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Գումարը պետք է զրոյից մեծ լինի");
+        _balance += amount;
+    }
+
+    public bool TryWithdraw(decimal amount)
+    {
+        if (amount <= 0 || amount > _balance) return false;   // մինուս գնալ չի կարելի
+        _balance -= amount;
+        return true;
+    }
+}`,
+        deep: `<p><b>Ավելի խորը։</b> Encapsulation-ը «ամեն field-ի վրա getter և setter գրելը» չէ։
+<code>public int Age { get; set; }</code> property-ն պաշտպանում է ուղիղ ոչինչ՝ սա նույն public
+field-ն է, միայն ավելի երկար։ Իսկական encapsulation-ը սկսվում է այնտեղ, որտեղ կա
+<i>կանոն</i>՝ տարիքը բացասական չի լինում, հաշվեկշիռը մինուս չի գնում, պատվերը երկու անգամ
+վճարել չի կարելի։ Կանոն չկա — մի հորինիր փաթեթավորում հանուն փաթեթավորման։</p>`,
+        links: [
+          { label: "MS Learn — Properties", url: "https://learn.microsoft.com/en-us/dotnet/csharp/properties" },
+          { label: "MS Learn — Access modifiers", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/access-modifiers" }
+        ],
+        task: {
+          kind: "write",
+          q: "Class-ի ներսում կա <code>private int _age;</code> field։ Գրիր <code>Age</code> property, որը արժեքը տալիս է դուրս, բայց ՉԻ թույլ տալիս փոխել այն դրսից (միայն ընթերցում)։",
+          placeholder: "public int Age => ...",
+          must: ["publicintage=>_age"],
+          solution: `private int _age;
+
+public int Age => _age;          // կարճ գրելաձև՝ միայն get
+
+// նույնը՝ ավելի մանրամասն.
+// public int Age { get { return _age; } }`,
+          explain: "Միայն get ունեցող property-ն արժեքը տալիս է դուրս, իսկ փոխել այն կարող է միայն class-ի ներսի կոդը։ Սա հենց վերահսկվող մուտքն է։"
+        }
+      },
+      {
+        id: "oop-3",
+        title: "Object-երի միջև երեք կապ",
+        subtitle: "is-a, has-a, uses-a — և ինչու է սա կոդից ավելի կարևոր",
+        theory: `
+<p>Object-երը միայնակ չեն ապրում։ Նրանց միջև լինում է ուղիղ երեք տեսակի հարաբերություն, և
+գրեթե ամբողջ architecture-ը դրանց միջև ճիշտ ընտրություն անելն է։</p>
+<ul>
+<li><b>is-a («հանդիսանում է»)</b> — շունը <i>հանդիսանում է</i> կենդանի։ Սա <b>inheritance</b>-ն է։</li>
+<li><b>has-a («ունի»)</b> — մեքենան <i>ունի</i> շարժիչ։ Սա <b>composition</b>-ն է (ուժեղ,
+շարժիչը առանց մեքենայի պետք չէ) կամ <b>aggregation</b>-ը (թույլ, խաղացողը ապրում է նաև առանց
+թիմի)։</li>
+<li><b>uses-a («օգտվում է»)</b> — վարորդը <i>օգտվում է</i> մեքենայից։ Սա
+<b>association</b>-ն է։</li>
+</ul>
+<p>Ստուգումը պարզ է՝ ասա կապը բարձրաձայն, մարդկային նախադասությամբ։ «Մեքենան հանդիսանում է
+շարժիչ» հնչում է որպես անհեթեթություն — նշանակում է inheritance-ը այստեղ սխալ է։ «Մեքենան
+ունի շարժիչ» — հնչում է նորմալ, նշանակում է սա has-a է։</p>
+<p>Հիշիր գլխավորը՝ <b>վատ ծրագրերը ավելի հաճախ կոտրվում են ոչ թե սխալ տրամաբանության, այլ
+object-երի միջև սխալ ընտրված կապերի պատճառով։</b> Method-ի սխալը ուղղում են մեկ րոպեում,
+կապերի սխալը՝ project-ի կեսը վերագրելով։</p>`,
+        code: `// is-a — inheritance
+class Animal { }
+class Dog : Animal { }             // Dog-ը ՀԱՆԴԻՍԱՆՈՒՄ Է Animal
+
+// has-a (ուժեղ) — composition. մասը ծնվում և մեռնում է ամբողջի հետ միասին
+class Car
+{
+    private readonly Engine _engine = new Engine();   // մեքենան ՏԻՐՈՒՄ Է շարժիչին
+}
+
+// has-a (թույլ) — aggregation. մասերը գալիս են դրսից և ապրում ինքնուրույն
+class Team
+{
+    private readonly List<Player> _players;
+    public Team(List<Player> players) => _players = players;  // խաղացողները եղել են թիմից առաջ
+}
+
+// uses-a — association. օգտվեց և բաց թողեց
+class Driver
+{
+    public void Drive(Car car) => car.Start();   // մեքենան իր մոտ չի պահում
+}`,
+        deep: `<p><b>Ավելի խորը։</b> Կապի ուժը աճում է այսպես՝ <i>uses-a → aggregation →
+composition → inheritance</i>։ Ինչքան կապն ուժեղ է, այնքան քիչ ազատություն կունենա կոդը հետո։
+Դրա համար փորձառու կանոնը հնչում է այսպես՝ վերցրու <b>ամենաթույլ կապը, որը բավարարում է</b>
+խնդրին։ Եթե բավական է object-ը փոխանցել parameter-ով — մի պահիր այն field-ով։ Եթե բավական է
+field-ը — մի ժառանգիր։</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — object-երի միջև հարաբերությունները", url: "https://refactoring.guru/ru/design-patterns/what-is-pattern" }
+        ],
+        task: {
+          q: "Ծրագրավորողը գրել է <code>class Car : Engine</code>։ Ի՞նչն է այստեղ սխալ?",
+          options: [
+            "Ոչինչ, շարժիչը մեքենայի կարևոր մասն է",
+            "Կապը սխալ է անվանված. մեքենան չի «հանդիսանում» շարժիչ, նա շարժիչ ունի — պետք է composition",
+            "Պետք էր Engine-ը ժառանգել Car-ից",
+            "Խնդիրը միայն class-ի անվան մեջ է"
+          ],
+          answer: 1,
+          explain: "Inheritance-ը արտահայտում է is-a։ «Մեքենան հանդիսանում է շարժիչ» — սուտ է, դրա համար ճիշտ տարբերակը՝ Engine field Car-ի ներսում (has-a)։"
+        }
+      },
+      {
+        id: "oop-4",
+        title: "Inheritance (is-a)",
+        subtitle: "Ընդհանուրը գրում ենք մեկ անգամ",
+        theory: `
+<p>Խաղում թշնամին, խաղացողը և boss-ը շատ ընդհանուր բան ունեն՝ անուն, առողջություն, վնաս
+ստանալու ունակություն։ Սա ամեն class-ի մեջ պատճենելը նշանակում է նույն bug-ը երեք անգամ
+ուղղել։</p>
+<p><b>Inheritance</b>-ը թույլ է տալիս ընդհանուրը հանել <b>base class</b>, իսկ ժառանգորդները
+այդ ամենը ստանում են ձրի և ավելացնում իրենցը։ Գրվում է երկու կետով՝
+<code>class Enemy : Entity</code> — «Enemy-ն հանդիսանում է Entity»։</p>
+<p>Ինչ կարևոր է իմանալ՝</p>
+<ul>
+<li>C#-ում class-ը կարող է ունենալ <b>միայն մեկ</b> base class։ Interface-ներ՝ ինչքան ուզես։</li>
+<li>Ժառանգորդը տեսնում է ծնողի <code>public</code> և <code>protected</code> անդամները, բայց ոչ
+<code>private</code>-ը։</li>
+<li><code>protected</code>-ը «յուրայինների համար» է՝ դրսից չի երևում, ժառանգորդներին երևում է։</li>
+</ul>
+<p>Եվ զգույշ եղիր՝ inheritance-ի խորը շղթաները (class → class → class → class) դառնում են
+փխրուն։ Վերևում ինչ-որ բան փոխում ես — անսպասելիորեն կոտրվում է ներքևում։ Երկու մակարդակը
+սովորաբար բավական է։</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    protected int Health = 100;               // յուրայինների համար՝ երևում է ժառանգորդներին
+
+    public void TakeDamage(int amount) => Health -= amount;   // ընդհանուր վարք
+}
+
+public class Enemy : Entity            // Enemy-ն ՀԱՆԴԻՍԱՆՈՒՄ Է Entity
+{
+    public int Damage { get; init; } = 10;
+    public void Attack(Entity target) => target.TakeDamage(Damage);
+}
+
+public class Player : Entity           // և Player-ը նույնպես
+{
+    public void Heal(int amount) => Health += amount;   // Health-ը հասանելի է՝ protected
+}
+
+var enemy = new Enemy { Name = "Goblin" };
+var hero  = new Player { Name = "Anna" };
+enemy.Attack(hero);            // base class-ի method-ը աշխատում է երկուսի համար էլ`,
+        deep: `<p><b>Ավելի խորը։</b> Inheritance-ը լեզվի ամենաուժեղ կապն է՝ ժառանգորդը մեխված է
+ծնողի ներքին կառուցվածքին։ Սա կոչում են <i>փխրուն base class-ի խնդիր</i>՝ ծնողի անվնաս թվացող
+փոփոխությունը լուռ կոտրում է սերունդներին։ Դրա համար ժամանակակից խորհուրդն է՝
+<b>«նախընտրիր composition-ը inheritance-ից»</b>. ժառանգիր միայն այն ժամանակ, երբ is-a-ն
+իսկապես ճշմարիտ է, և վարքը ընդհանուր է ընդմիշտ։</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "MS Learn — protected", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/protected" }
+        ],
+        task: {
+          q: "Ի՞նչ է նշանակում <code>protected</code> modifier-ը?",
+          options: [
+            "Անդամը երևում է բոլորին, ինչպես public-ը",
+            "Անդամը երևում է միայն հենց class-ի ներսում",
+            "Անդամը երևում է class-ի ներսում և ժառանգորդ class-երում, բայց ոչ դրսից",
+            "Անդամը չի կարելի փոխել object-ի ստեղծումից հետո"
+          ],
+          answer: 2,
+          explain: "protected-ը «private է օտարների համար, public՝ ժառանգորդների համար». դրսից չես հասնի, իսկ ժառանգորդը օգտվում է ազատ։"
+        }
+      },
+      {
+        id: "oop-5",
+        title: "base բանալի բառը",
+        subtitle: "Ծնողին օգնության կանչել",
+        theory: `
+<p>Երբեմն ժառանգորդը չի ուզում ամբողջովին փոխարինել ծնողի վարքը — նա ուզում է <i>լրացնել</i>
+այն։ «Արա ինչպես միշտ, հետո էլ ահա սա»։</p>
+<p>Դրա համար կա <code>base</code> բառը։ Այն նշանակում է «ծնողի version»՝</p>
+<ul>
+<li><code>base.Describe()</code> — կանչել ծնողի method-ը override արված method-ի ներսից։</li>
+<li><code>: base(name)</code> — կանչել ծնողի <b>constructor</b>-ը, որ նա կարգավորի object-ի իր
+մասը։</li>
+</ul>
+<p>Constructor-ների մասին կարևորը՝ object-ը կառուցվում է <b>ներքևից վերև</b>՝ սկզբում
+աշխատում է base class-ի constructor-ը, հետո՝ ժառանգորդինը։ Եթե ծնողը դատարկ constructor չունի,
+ժառանգորդը <b>պարտավոր է</b> բացահայտ կանչել պետք եղածը <code>: base(...)</code>-ի միջոցով,
+այլապես կոդը compile չի լինի։</p>`,
+        code: `public class Employee
+{
+    public string Name { get; }
+    public decimal Salary { get; }
+
+    public Employee(string name, decimal salary)   // դատարկ constructor չկա!
+    {
+        Name = name;
+        Salary = salary;
+    }
+
+    public virtual string Describe() => $"{Name}, աշխատավարձ {Salary}";
+}
+
+public class Manager : Employee
+{
+    public int TeamSize { get; }
+
+    // սկզբում ծնողը կկարգավորի Name-ը և Salary-ն, հետո մենք՝ TeamSize-ը
+    public Manager(string name, decimal salary, int teamSize)
+        : base(name, salary)
+    {
+        TeamSize = teamSize;
+    }
+
+    // ծնողին չենք վերագրում, այլ լրացնում ենք նրան
+    public override string Describe()
+        => base.Describe() + $", թիմ՝ {TeamSize} հոգի";
+}
+
+Console.WriteLine(new Manager("Anna", 3000, 5).Describe());
+// Anna, աշխատավարձ 3000, թիմ՝ 5 հոգի`,
+        deep: `<p><b>Ավելի խորը։</b> Կա մի նենգ մանրուք՝ մի կանչիր <code>virtual</code> method-եր
+base class-ի constructor-ից։ Այդ պահին ժառանգորդի constructor-ը դեռ <i>չի աշխատել</i>, բայց
+կկանչվի արդեն նրա override արված version-ը — և կտեսնի չնախաստորագրված field-եր (զրոներ և
+<code>null</code>)։ Այն bug-երից է, որ կես օր են փնտրում։</p>`,
+        links: [
+          { label: "MS Learn — base", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/base" },
+          { label: "MS Learn — Constructors", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors" }
+        ],
+        task: {
+          kind: "write",
+          q: "<code>Employee</code> class-ը ունի միայն <code>Employee(string name)</code> constructor։ Գրիր ժառանգորդի <code>Manager(string name)</code> constructor-ը, որը անունը փոխանցում է ծնողին։",
+          placeholder: "public Manager(string name) ...",
+          must: ["base(name)"],
+          solution: `public Manager(string name) : base(name)
+{
+    // այստեղ՝ կարգավորման սեփական մասը
+}`,
+          explain: "Եթե ծնողը առանց parameter-ների constructor չունի, ժառանգորդը պարտավոր է բացահայտ կանչել համապատասխանը : base(...)-ի միջոցով։ Ծնողը object-ի իր մասը կարգավորում է առաջինը։"
+        }
+      },
+      {
+        id: "oop-6",
+        title: "Association (uses-a)",
+        subtitle: "Օգտվեց և բաց թողեց",
+        theory: `
+<p>Ուսուցիչը օգտվում է գրատախտակից։ Գրատախտակը իրենը չէ, այն կախված է դասասենյակում և կապրի
+ցանկացած ուսուցչից ավելի երկար։ Նրանք պարզապես հանդիպել են դասի ընթացքում։</p>
+<p><b>Association</b>-ը ամենաթույլ կապն է՝ object-ը <i>ստանում է մեկ ուրիշ object ժամանակավոր</i>,
+սովորաբար method-ի parameter-ով, և իր մոտ չի պահում այն։ Տիրապետում չկա, կյանքի տևողությունը
+նա չի վերահսկում։</p>
+<p>Ինչու՞ է սա պետք՝</p>
+<ul>
+<li>object-երը մնում են <b>անկախ</b> — դրանք հեշտ է կրկին օգտագործել։</li>
+<li>class-ը հեշտ է testel-ը՝ տվեցիր ուրիշ գրատախտակ — և վերջ։</li>
+<li>չկա կոշտ կպչունություն, երբ «մեկին դիպչում ես — ամեն ինչ փլվում է»։</li>
+</ul>
+<p>Association-ի նշանը կոդում շատ պարզ է՝ <b>object-ը գալիս է parameter-ով, ոչ թե ընկած է
+field-ով։</b></p>`,
+        code: `public class Whiteboard
+{
+    public void Write(string text) => Console.WriteLine($"[գրատախտակ] {text}");
+}
+
+public class Teacher
+{
+    public string Name { get; init; } = "";
+
+    // գրատախտակը գալիս է դասի ժամանակով և գնում — սա association է
+    public void Teach(Whiteboard board, string topic)
+    {
+        board.Write($"{topic} — դասը վարում է {Name}");
+    }
+}
+
+var board = new Whiteboard();          // գրատախտակը գոյություն ունի ինքնուրույն
+var anna  = new Teacher { Name = "Anna" };
+var bob   = new Teacher { Name = "Bob" };
+
+anna.Teach(board, "OOP");              // մեկ գրատախտակից օգտվում են երկուսն էլ
+bob.Teach(board, "LINQ");`,
+        deep: `<p><b>Ավելի խորը։</b> Հենց association-ի վրա է կանգնած <i>dependency injection</i>-ը։
+Class-ը իրեն օգնականներ չի ստեղծում <code>new</code>-ի միջոցով, այլ ստանում է դրանք դրսից՝
+method-ի կամ constructor-ի parameter-ով։ Այդ ժամանակ test-երում նրան կարելի է տալ կեղծ
+version, իսկ մարտում՝ իսկականը, և հենց class-ը վերագրել պետք չի լինի։</p>`,
+        links: [
+          { label: "MS Learn — Dependency injection", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection" },
+          { label: "MS Learn — Methods & parameters", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods" }
+        ],
+        task: {
+          q: "Ինչպե՞ս տարբերել association-ը (uses-a) composition-ից (has-a) հենց կոդում?",
+          options: [
+            "Ըստ class-ի անվան",
+            "Association-ի ժամանակ object-ը գալիս է parameter-ով և չի պահվում, composition-ի ժամանակ՝ ընկած է field-ով և պատկանում է տիրոջը",
+            "Association-ը միշտ գրվում է interface-ի միջոցով",
+            "Տարբերություն չկա, սա միևնույն բանն է"
+          ],
+          answer: 1,
+          explain: "Parameter = ժամանակավոր օգտագործում (uses-a)։ Field, որը ստեղծված է և պատկանում է class-ին = տիրապետում (has-a, composition)։"
+        }
+      },
+      {
+        id: "oop-7",
+        title: "Aggregation (թույլ has-a)",
+        subtitle: "Մասը կա, բայց նա ապրում է իր կյանքով",
+        theory: `
+<p>Թիմում կան խաղացողներ։ Թիմը ցրվեց — խաղացողները ոչ մի տեղ չկորան, նրանք պարզապես անցան այլ
+թիմեր։ Խաղացողը գոյություն է ունեցել թիմից <i>առաջ</i> և կապրի նրանից ավելի երկար։</p>
+<p><b>Aggregation</b>-ը «այս բանը ես ունեմ, բայց այն իմը չէ» սկզբունքն է։ Object-ը մեկ ուրիշ
+object պահում է field-ով, բայց <b>չի ստեղծում այն և պատասխանատու չէ նրա կյանքի համար</b>։
+Մասերը գալիս են դրսից, սովորաբար constructor-ի միջոցով։</p>
+<p>Բնորոշ օրինակներ՝</p>
+<ul>
+<li>Թիմ → խաղացողներ</li>
+<li>Բաժին → աշխատակիցներ</li>
+<li>Գրադարան → գրքեր (գիրքը չի անհետանում, եթե գրադարանը փակեցին)</li>
+</ul>
+<p>Իմաստը կրկին օգտագործման մեջ է՝ միևնույն դետալը կարող է պատկանել մի քանի տիրոջ, անցնել
+նրանց միջև և ապրել հետո էլ, երբ տերն այլևս չկա։</p>`,
+        code: `public class Player
+{
+    public string Name { get; init; } = "";
+}
+
+public class Team
+{
+    private readonly List<Player> _players;
+
+    // խաղացողները գալիս են ԴՐՍԻՑ — թիմը դրանք չի ստեղծում
+    public Team(List<Player> players) => _players = players;
+
+    public void PrintRoster()
+    {
+        foreach (var p in _players) Console.WriteLine(p.Name);
+    }
+}
+
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+var team = new Team(new List<Player> { anna, bob });
+team.PrintRoster();
+
+team = null;                 // թիմն այլևս չկա...
+Console.WriteLine(anna.Name); // ...իսկ Anna-ն ողջ է և կարող է խաղալ այլ թիմում`,
+        deep: `<p><b>Ավելի խորը։</b> Aggregation-ը ունի ստորջրյա քար՝ <i>ընդհանուր վիճակ</i>։ Եթե
+միևնույն խաղացողը ընկած է երկու թիմում, մեկ թիմից արված փոփոխությունը կտեսնեն երկուսն էլ։
+Երբեմն հենց դա է պետք, երբեմն՝ առեղծվածային bug-երի աղբյուր է։ Եթե ուզում ես անկախություն,
+դուրս տուր ցուցակի պատճենը (<code>_players.ToList()</code>) կամ
+<code>IReadOnlyList</code>, որ օտար կոդը քո collection-ը չփոխի։</p>`,
+        links: [
+          { label: "MS Learn — Collections", url: "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/list-collection" },
+          { label: "MS Learn — IReadOnlyList", url: "https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1" }
+        ],
+        task: {
+          q: "Ինչո՞վ է aggregation-ը տարբերվում composition-ից?",
+          options: [
+            "Ոչնչով, սրանք հոմանիշներ են",
+            "Aggregation-ի ժամանակ մասը գալիս է դրսից և ապրում է անկախ, composition-ի ժամանակ՝ ստեղծվում է տիրոջ կողմից և մեռնում է նրա հետ միասին",
+            "Aggregation հնարավոր է միայն collection-ների համար",
+            "Composition-ը միշտ interface-ի միջոցով է, aggregation-ը՝ class-ի"
+          ],
+          answer: 1,
+          explain: "Բանալին կյանքի տևողությունն ու տիրապետումն է՝ խաղացողը կապրի թիմից ավելի երկար (aggregation), իսկ սենյակը տնից ավելի երկար չի ապրի (composition)։"
+        }
+      },
+      {
+        id: "oop-8",
+        title: "Composition (ուժեղ has-a)",
+        subtitle: "Մասը ծնվում և մեռնում է ամբողջի հետ միասին",
+        theory: `
+<p>Տանը կան սենյակներ։ Տունը քանդեցին — սենյակներն այլևս չկան։ Սենյակը չի կարող «անցնել այլ
+տուն»՝ նա գոյություն ունի միայն որպես այս տան մաս։</p>
+<p><b>Composition</b>-ը ուժեղ տիրապետում է՝ object-ը <b>ինքն է ստեղծում</b> իր մասերը և
+լիովին պատասխանատու է դրանց համար։ Դուրս դրանք սովորաբար չեն տրվում, դրսից չեն դրվում։</p>
+<p>Բնորոշ օրինակներ՝ տուն → սենյակներ, մեքենա → շարժիչ, պատվեր → պատվերի տողեր։</p>
+<p>Եվ ամենակարևորը՝ <b>composition-ը inheritance-ի ժամանակակից փոխարինումն է</b>։ «Ինչ-որ բան
+դառնալու» փոխարեն object-ը «ինչ-որ բան ունի» և աշխատանքը փոխանցում է ներս։ Այդպիսի կոդը
+ծռվում է, ոչ թե կոտրվում՝ ուզեցիր այլ վարք — դրեցիր այլ դետալ, ոչ թե հորինեցիր նոր
+ժառանգորդ class։</p>`,
+        code: `public class Engine
+{
+    public void Start() => Console.WriteLine("Շարժիչը գործարկված է");
+}
+
+public class Car
+{
+    // մեքենան ԻՆՔՆ Է ստեղծում շարժիչը և տիրում է նրան
+    private readonly Engine _engine = new Engine();
+
+    public void Start()
+    {
+        _engine.Start();            // աշխատանքը փոխանցում ենք մեր մասին
+        Console.WriteLine("Գնացինք");
+    }
+}
+
+var car = new Car();
+car.Start();
+// դրսից _engine-ին չես հասնի. նա մեքենայի մասն է, ոչ թե առանձին իր
+
+// car-ը գնում է աղբարկղ — շարժիչը գնում է նրա հետ միասին`,
+        deep: `<p><b>Ավելի խորը։</b> Composition-ը հաճախ շփոթում են inheritance-ի հետ, որովհետև
+դրսից արդյունքը նման է՝ <code>Car</code>-ի մոտ հայտնվում է <code>Start()</code> method-ը։
+Տարբերությունն այն է, թե <i>որտեղից</i> է նա եկել։ Inheritance-ի ժամանակ վարքը մեխված է
+type-ին ընդմիշտ։ Composition-ի ժամանակ դետալը կարելի է փոխարինել — թեկուզ ծրագրի աշխատանքի
+պահին։ Այստեղից էլ աճում է Strategy pattern-ը՝ class-ը վարքը պահում է object-ով և փոխում է այն
+թռիչքի մեջ։</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — Strategy", url: "https://refactoring.guru/ru/design-patterns/strategy" }
+        ],
+        task: {
+          kind: "write",
+          q: "Գրիր <code>House</code> class, որը ՏԻՐՈՒՄ Է սենյակին՝ <code>Room</code> type-ի private <code>_room</code> field, որը ստեղծում է հենց ինքը՝ class-ը։",
+          placeholder: "public class House ...",
+          must: ["private", "_room=newroom()"],
+          solution: `public class House
+{
+    private readonly Room _room = new Room();   // տունն ինքն է ստեղծում սենյակը
+}`,
+          explain: "Մասը ստեղծվում է տիրոջ ներսում և չի գալիս դրսից — սա հենց composition-ն է. չկա տուն, չկա նաև սենյակ։"
+        }
+      },
+      {
+        id: "oop-9",
+        title: "Generalization",
+        subtitle: "Կրկնություն նկատեցիր — հանիր վերև",
+        theory: `
+<p>Մեքենան ունի անիվներ և կարողանում է գնալ։ Հեծանիվը՝ նույնպես։ Բեռնատարը՝ նույնպես։
+Միևնույն բանը երեք class-ի մեջ պատճենելը ձանձրալի է և վտանգավոր։</p>
+<p><b>Generalization</b>-ը գործընթաց է՝ նայում ես մի քանի նման class-երի, գտնում ես ընդհանուրը
+և հանում ես այն ընդհանուր ծնողի մեջ։ Ստացվում է <code>Vehicle</code>, իսկ <code>Car</code>-ը և
+<code>Bike</code>-ը դառնում են նրա մասնավոր դեպքերը։</p>
+<p>Generalization-ը inheritance-ի հակառակ կողմն է։ Inheritance-ը <i>արդյունքն</i> է
+(«Car is-a Vehicle»), generalization-ը՝ <i>ճանապարհը</i>, որով նրան հասնում են՝ ներքևից վերև,
+կոնկրետից դեպի ընդհանուրը։</p>
+<p>Կարևոր պահ՝ ընդհանրացնել պետք է <b>ըստ կրկնության փաստի</b>, ոչ թե նախապես։ Սկզբում գրում ես
+երկու-երեք կոնկրետ class, տեսնում ես իսկական ընդհանուրը — և միայն այդ ժամանակ հանում ես։
+Ծնողները, որ հորինվել են նախապես՝ «ապագայի համար», գրեթե միշտ պարզվում է՝ անհարմար են։</p>`,
+        code: `// Եղել է՝ երկու class միանման կտորներով
+// class Car  { public int Wheels = 4; public void Move() {...} }
+// class Bike { public int Wheels = 2; public void Move() {...} }
+
+// Դարձել է՝ ընդհանուրը հանված է վերև
+public abstract class Vehicle
+{
+    public int Wheels { get; protected set; }
+    public virtual void Move() => Console.WriteLine("Տրանսպորտը գնում է");
+}
+
+public class Car : Vehicle
+{
+    public Car() => Wheels = 4;
+    public override void Move() => Console.WriteLine("Մեքենան գնում է բենզինով");
+}
+
+public class Bike : Vehicle
+{
+    public Bike() => Wheels = 2;
+    public override void Move() => Console.WriteLine("Հեծանիվը գնում է ոտնակներով");
+}
+
+Vehicle[] garage = { new Car(), new Bike() };
+foreach (var v in garage) v.Move();   // ամեն մեկը գնում է յուրովի`,
+        deep: `<p><b>Ավելի խորը։</b> Կա թակարդ՝ <i>կեղծ generalization</i>։ Երկու class կարող են
+պատահաբար նման field-եր ունենալ՝ առանց ազգական լինելու։ Ապրանքի զեղչը և աշխատակցի զեղչը
+երկուսն էլ ունեն <code>Percent</code>, բայց ընդհանուր <code>Discount</code> base class-ը
+այստեղ միայն ձեռքերդ կկապի՝ վաղը կանոնները կբաժանվեն, և պետք կլինի քանդել-դասավորել։
+Ընդհանուր <i>իմաստը</i> ընդհանուր field-երից կարևոր է։</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "Refactoring Guru — Extract Superclass", url: "https://refactoring.guru/ru/extract-superclass" }
+        ],
+        task: {
+          q: "Ի՞նչ է generalization-ը?",
+          options: [
+            "Class-ի վերածումը generic-ի T parameter-ով",
+            "Մի քանի class-ի ընդհանուր հատկանիշների հանումը ընդհանուր ծնող class-ի մեջ",
+            "Class-ից ավելորդ method-երի ջնջումը",
+            "Class-երի փոխարինումը interface-ներով"
+          ],
+          answer: 1,
+          explain: "Generalization-ը շարժում է ներքևից վերև՝ գտնում ենք մի քանի class-ի մոտ կրկնվողը և դրանից սարքում base class։ Generic-ների հետ սա կապ չունի։"
+        }
+      },
+      {
+        id: "oop-10",
+        title: "Abstract class-եր",
+        subtitle: "Պատրաստվածք, որից իր չես կարող սարքել",
+        theory: `
+<p>«Պատկերը» իր չէ։ Նկարել կարելի է շրջան կամ քառակուսի, իսկ պարզապես «պատկեր»՝ չի կարելի։
+Բայց բոլոր պատկերները ընդհանուր բան ունեն՝ մակերես, գույն, նկարելու method։</p>
+<p><b>Abstract class</b>-ը այն class-ն է, որից <b>չի կարելի object ստեղծել</b>
+(<code>new Shape()</code>-ը compile չի լինի), բայց որից կարելի է ժառանգել։ Նա միավորում է
+երկու բան՝</p>
+<ul>
+<li><b>պատրաստի ընդհանուր կոդ</b> — սովորական method-եր և field-եր, որոնք ժառանգորդները
+ստանում են ձրի։</li>
+<li><b>պարտավորություններ</b> — առանց մարմնի <code>abstract</code> անդամներ. ժառանգորդը
+<i>պարտավոր է</i> դրանք իրականացնել, այլապես compile չի լինի։</li>
+</ul>
+<p>Սա էլ հենց տարբերությունն է interface-ից՝ interface-ը միայն պարտավորություններ է առանց
+կոդի, abstract class-ը՝ պարտավորություններ <i>գումարած</i> ընդհանուր կոդ։ Abstract class ես
+վերցնում այն ժամանակ, երբ ազգակից class-երը ընդհանուր իրականացում ունեն, որը ափսոս է
+պատճենել։</p>`,
+        code: `public abstract class Shape
+{
+    public string Color { get; init; } = "black";
+
+    // պարտավորություն՝ մարմին չկա, ժառանգորդը ՊԱՐՏԱՎՈՐ Է գրել իրենը
+    public abstract double Area();
+
+    // ընդհանուր պատրաստի կոդ՝ հասնում է բոլոր ժառանգորդներին ձրի
+    public void Describe()
+        => Console.WriteLine($"{GetType().Name} ({Color}), մակերես {Area():0.00}");
+}
+
+public class Circle : Shape
+{
+    public double Radius { get; init; }
+    public override double Area() => Math.PI * Radius * Radius;
+}
+
+public class Rect : Shape
+{
+    public double W { get; init; }
+    public double H { get; init; }
+    public override double Area() => W * H;
+}
+
+// var s = new Shape();          // compile-ի ՍԽԱԼ. abstract class է
+Shape[] shapes = { new Circle { Radius = 2 }, new Rect { W = 3, H = 4 } };
+foreach (var s in shapes) s.Describe();`,
+        deep: `<p><b>Ավելի խորը։</b> <code>abstract</code>-ը և <code>virtual</code>-ը հեշտ է շփոթել։
+<code>virtual</code> — «ես ունեմ աշխատող version, կարող ես փոխարինել»։ <code>abstract</code> —
+«version ընդհանրապես չկա, դու պարտավոր ես գրել»։ Abstract անդամ լինում է միայն abstract
+class-ում. այլապես կարելի կլիներ ստեղծել object՝ method-ի փոխարեն անցքով։</p>`,
+        links: [
+          { label: "MS Learn — abstract", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/abstract" },
+          { label: "MS Learn — Abstract and sealed classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/abstract-and-sealed-classes-and-class-members" }
+        ],
+        task: {
+          q: "Ի՞նչ տարբերություն կա <code>abstract</code> և <code>virtual</code> method-ի միջև?",
+          options: [
+            "Ոչ մի, սրանք հոմանիշներ են",
+            "abstract-ը մարմին չունի և պարտադիր է իրականացնել, virtual-ը ունի աշխատող մարմին և override է արվում ըստ ցանկության",
+            "virtual-ը կարելի է հայտարարել միայն interface-ներում",
+            "abstract-ը աշխատում է ավելի արագ"
+          ],
+          answer: 1,
+          explain: "abstract-ը պարտավորություն է առանց իրականացման, virtual-ը՝ լռելյայն իրականացում, որը ժառանգորդը կարող է, բայց պարտավոր չէ փոխարինել։"
+        }
+      },
+      {
+        id: "oop-11",
+        title: "Polymorphism",
+        subtitle: "Մեկ հրաման — տարբեր վարք",
+        theory: `
+<p>Ասա class-ին «վազիր» — մարդը կվազի ոտքերով, թռչունը կթռչի, ձուկը կլողա։ Հրամանը մեկն է,
+կատարումը՝ տարբեր։ Սա հենց <b>polymorphism</b>-ն է («շատ ձևեր»)։</p>
+<p>C#-ում նա աշխատում է այսպես՝</p>
+<ul>
+<li>base class-ում method-ը նշում են <code>virtual</code>-ով — «այս version-ը կարելի է
+փոխարինել»։</li>
+<li>ժառանգորդում գրում են <code>override</code> — իր version-ը։</li>
+<li>փոփոխականը կարող է ունենալ ծնողի type-ը, բայց <b>որոշում է միշտ object-ի իսկական
+type-ը</b> — և որոշում է դա <i>ծրագրի աշխատանքի ընթացքում</i>, ոչ թե compile-ի պահին։</li>
+</ul>
+<p>Ինչու՞ է սա պետք. այն կոդը, որը շրջում է <code>Entity[]</code> զանգվածը, ոչինչ չգիտի
+boss-երի և խաղացողների մասին։ Վաղը կավելացնես թշնամու նոր type — այդ կոդին <b>դիպչել պետք չի
+լինի</b>։ Հենց սրա համար էլ սկսվել է OOP-ն։</p>
+<p>Կա նաև <code>sealed override</code> — «ես override արեցի, և ավելի փոխելը արգելված է»։
+Այդպես ամրագրում են վարքը, որի վրա չի կարելի ազդել։</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    public virtual void Update() => Console.WriteLine($"{Name} կանգնած է");
+}
+
+public class Enemy : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} փնտրում է խաղացողին");
+}
+
+public class Player : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} լսում է ստեղները");
+}
+
+public class Boss : Enemy
+{
+    // sealed. այս version-ը ավելի override անել այլևս չի կարելի
+    public sealed override void Update() => Console.WriteLine($"{Name} պատրաստում է հարվածը");
+}
+
+Entity[] world = { new Player { Name = "Anna" },
+                   new Enemy  { Name = "Goblin" },
+                   new Boss   { Name = "Dragon" } };
+
+foreach (var e in world)
+    e.Update();     // փոփոխականի type-ը Entity է, իսկ աշխատում է ԻՍԿԱԿԱՆ type-ի version-ը
+
+// Anna լսում է ստեղները / Goblin փնտրում է խաղացողին / Dragon պատրաստում է հարվածը`,
+        deep: `<p><b>Ավելի խորը։</b> Ինչպես է սա կազմակերպված ներսում — ամեն type ունի virtual
+method-երի աղյուսակ (<i>v-table</i>), փոքրիկ ցուցակ՝ «իրականում որ method-ը կանչել»։ Դրա համար
+կանչը որոշվում է ծրագրի աշխատանքի պահին։ Վճարը դրա համար ցուցիչով մեկ ավելորդ ցատկ է՝ գինը
+չնչին։ Իսկ ահա <code>override</code>-ի փոխարեն <code>new</code>-ը polymorphism չէ, այլ
+<i>թաքցնում</i> (hiding). այնտեղ ընտրությունը կատարվում է ըստ փոփոխականի type-ի, և արդյունքը
+գրեթե միշտ անսպասելի է։ Նշիր <code>override</code>, եթե ուզում ես իսկական փոխարինում։</p>`,
+        links: [
+          { label: "MS Learn — Polymorphism", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism" },
+          { label: "MS Learn — virtual / override", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/virtual" }
+        ],
+        task: {
+          kind: "write",
+          q: "Base class-ում կա <code>public virtual void Update()</code>։ Գրիր ժառանգորդում այս method-ի քո version-ը այնպես, որ աշխատի հենց նա (իսկական override, ոչ թե թաքցնում)։",
+          placeholder: "public ... void Update() ...",
+          must: ["overridevoidupdate()"],
+          solution: `public override void Update()
+{
+    Console.WriteLine("Ժառանգորդի սեփական տրամաբանությունը");
+}`,
+          explain: "Միայն override-ը տալիս է իսկական polymorphism՝ կանչը որոշվում է object-ի իրական type-ով։ Նրա փոխարեն new բառը միայն կթաքցներ ծնողի method-ը։"
+        }
+      },
+      {
+        id: "oop-12",
+        title: "Interface-ներ և abstraction",
+        subtitle: "Contract՝ ինչ կարողանալ, ոչ թե ինչպես",
+        theory: `
+<p>Վարդակին կարելի է միացնել թեյնիկ, լամպ կամ լիցքավորիչ։ Վարդակին միևնույն է, թե ինչ կա
+սարքի ներսում — կարևորը, որ նա ունենա համապատասխան խրոց։ Խրոցը <b>contract</b> է։</p>
+<p><b>Interface</b>-ը այն ցուցակն է, ինչ class-ը <i>պարտավոր է կարողանալ</i>՝ առանց մեկ տողի
+այն մասին, թե <i>ինչպես</i> է նա դա անում։ Class-երը «ստորագրում են contract-ը»
+<code>:</code> նշանով և գրում իրենց իրականացումը։ Interface-ների անունները ավանդույթով սկսվում
+են <code>I</code>-ով։</p>
+<p>Իսկ <b>abstraction</b>-ը հենց այն սովորությունն է՝ աշխատել contract-ների հետ, ոչ թե կոնկրետ
+class-երի։ Կոդը կախված է <code>IRepository</code>-ից, իսկ նրա հետևում ընկած է տվյալների բազա,
+ֆայլ, թե test-ի համար կեղծիք — կոդին միևնույն է։</p>
+<p>Ինչու՞՝</p>
+<ul>
+<li><b>անջատում</b> — փոխում ես իրականացումը՝ առանց դիպչելու նրանց, ովքեր օգտվում են դրանից։</li>
+<li><b>test-եր</b> — հեշտ է տալ կեղծ իրականացում։</li>
+<li><b>ճկունություն</b> — class-ը կարող է իրականացնել <b>ինչքան ուզես</b> interface, թեև base
+class նա ունի միայն մեկը։</li>
+</ul>`,
+        code: `public interface IRenderable      // contract՝ կարողանում եմ նկարվել
+{
+    void Render();
+}
+
+public interface IUpdatable       // contract՝ կարողանում եմ թարմացվել
+{
+    void Update();
+}
+
+// մեկ class — միանգամից մի քանի contract
+public class Player : IRenderable, IUpdatable
+{
+    public void Render() => Console.WriteLine("նկարում եմ խաղացողին");
+    public void Update() => Console.WriteLine("շարժում եմ խաղացողին");
+}
+
+public class Rock : IRenderable   // քարը միայն նկարվում է
+{
+    public void Render() => Console.WriteLine("նկարում եմ քարը");
+}
+
+// կոդը աշխատում է contract-ի հետ և չգիտի կոնկրետ class-երի մասին
+List<IRenderable> scene = new() { new Player(), new Rock() };
+foreach (var item in scene) item.Render();`,
+        deep: `<p><b>Ավելի խորը։</b> Ե՞րբ վերցնել interface, և երբ՝ abstract class։ Interface-ը
+<i>ունակության</i> մասին է («կարողանում է նկարվել»), այն ստանում են տարբեր ընտանիքների
+class-եր։ Abstract class-ը <i>ազգակցության</i> մասին է («սա պատկեր է») գումարած ընդհանուր
+կոդը։ Գործնական կանոն՝ սկսիր interface-ից, իսկ abstract class ավելացրու, երբ հայտնվեց ընդհանուր
+կոդ, որը ափսոս է պատճենել։ Եվ interface-ները պահիր փոքր՝ մեկ method ունեցող
+<code>IRenderable</code>-ը ավելի օգտակար է, քան քսանով <code>IEverything</code>-ը։</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces" },
+          { label: "MS Learn — Interfaces vs abstract classes", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "Ինչու՞ class-ը կարող է իրականացնել շատ interface, բայց ժառանգել միայն մեկ class-ից?",
+          options: [
+            "Այդպես որոշել են syntax-ի գեղեցկության համար",
+            "Interface-ները սահմանում են միայն contract առանց իրականացման, դրա համար բախվելու բան չկա. իսկ class-երի մոտ կարող է լինել միևնույն method-ի վիճելի իրականացում",
+            "Interface-ները աշխատում են class-երից արագ",
+            "Իրականում C#-ում կարելի է ժառանգել մի քանի class"
+          ],
+          answer: 1,
+          explain: "Class-երի բազմակի ժառանգումը ծնում է «ո՞ւմ իրականացումը վերցնել» հարցը։ Interface-ների մոտ իրականացում չկա — վերցնելու բան չկա, բախում էլ չի առաջանում։"
+        }
+      },
+      {
+        id: "oop-13",
+        title: "Ինչ կարելի է հայտարարել interface-ում",
+        subtitle: "Թույլատրվածի և արգելվածի ցուցակը",
+        theory: `
+<p>Interface-ը նկարագրում է <i>ունակություններ</i>, ոչ թե կառուցվածք։ Այստեղից էլ բխում է, թե
+ինչ կարելի է դնել նրա մեջ, և ինչը՝ ոչ։</p>
+<p><b>Կարելի է՝</b></p>
+<ul>
+<li><b>method-եր</b> — ամենահաճախը՝ ստորագրություն առանց մարմնի։</li>
+<li><b>property-ներ</b> — <code>get</code>-ով, <code>set</code>-ով կամ երկուսով։</li>
+<li><b>event-եր</b> — բաժանորդագրության/ծանուցման համար։</li>
+<li><b>indexer-ներ</b> — դիմում ինչպես զանգվածին՝ <code>obj[0]</code>։</li>
+</ul>
+<p><b>Չի կարելի՝</b></p>
+<ul>
+<li><b>field-եր</b> — interface-ը տվյալներ չի պահում, նա վարքի մասին է։</li>
+<li><b>constructor-ներ</b> — interface-ը object-երի ստեղծումը չի կառավարում։</li>
+<li><b>destructor-ներ</b>։</li>
+<li><b>access modifier-ներ</b> — ամեն ինչ առանց այդ էլ public է, <code>public</code> գրելը
+իմաստ չունի։</li>
+<li><b>static անդամներ</b> — մեկ բացառությամբ՝ <code>static abstract</code>-ը C# 11-ից,
+ընդհանրացված մաթեմատիկայի համար։</li>
+</ul>`,
+        code: `public interface IStorage
+{
+    // method — ստորագրություն առանց մարմնի
+    void Save(string data);
+
+    // property
+    int Count { get; }
+
+    // event
+    event Action<string> Saved;
+
+    // indexer
+    string this[int index] { get; }
+
+    // private int _size;              // ՍԽԱԼ. field-եր չկան
+    // public IStorage() { }           // ՍԽԱԼ. constructor-ներ չկան
+    // public void Save(string d);     // ՍԽԱԼ. modifier-ը ավելորդ է
+}
+
+public class MemoryStorage : IStorage
+{
+    private readonly List<string> _items = new();   // field-ը ապրում է CLASS-ում
+
+    public int Count => _items.Count;
+    public string this[int index] => _items[index];
+    public event Action<string>? Saved;
+
+    public void Save(string data)
+    {
+        _items.Add(data);
+        Saved?.Invoke(data);
+    }
+}`,
+        deep: `<p><b>Ավելի խորը։</b> C# 8-ից interface-ների մոտ հայտնվեցին <i>լռելյայն
+իրականացումով method-եր</i> (default interface methods)։ Սա արեցին ոչ թե հարմարության համար,
+այլ որպեսզի հնարավոր լինի method ավելացնել արդեն հրապարակված interface-ին՝ առանց կոտրելու
+բոլորին, ովքեր այն արդեն իրականացրել են։ Օգտվիր սրանից հազվադեպ. եթե իրականացումը շատանում է,
+սա արդեն contract չէ, այլ abstract class՝ միայն վերազգեստավորված։</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/interface" },
+          { label: "MS Learn — Default interface methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/interface-implementation/default-interface-methods-versions" }
+        ],
+        task: {
+          q: "Թվարկվածներից ո՞րը ՉԻ կարելի հայտարարել interface-ում?",
+          options: [
+            "Method առանց մարմնի",
+            "Property get-ով և set-ով",
+            "Field՝ տվյալներ պահելու համար",
+            "Event"
+          ],
+          answer: 2,
+          explain: "Interface-ը տվյալներ չի պահում — field-եր նրա մեջ չկան։ Method-եր, property-ներ, event-եր և indexer-ներ հայտարարել կարելի է։"
+        }
+      },
+      {
+        id: "oop-14",
+        title: "Ռոմբի խնդիրը",
+        subtitle: "Ինչու չի կարելի ժառանգել երկու class",
+        theory: `
+<p>Պատկերացրու՝ <b>A</b> class-ը կարողանում է <code>DoWork()</code>։ <b>B</b> և <b>C</b>
+class-երը ժառանգում են A-ից և ամեն մեկը <code>DoWork()</code>-ը վերագրում է յուրովի։ Հիմա
+<b>D</b> class-ը ուզում է ժառանգել միանգամից B և C։ Հարց՝ ո՞ւմ <code>DoWork()</code>-ը նա
+կստանա — B-ի՞, թե՞ C-ի։</p>
+<p>Պատասխան չկա։ Ժառանգման սխեման նկարի վրա նման է ռոմբի, դրա համար էլ սա կոչում են
+<b>ռոմբի խնդիր</b> (diamond problem)։ Հենց դրա պատճառով էլ C#-ը <b>արգելում է ժառանգել մեկից
+ավելի class</b>. ավելի լավ է առանց այս հնարավորության, քան անկանխատեսելի կոդով։</p>
+<p>Փոխարինումը interface-ներն են։ Նրանք իրականացում չունեն, նշանակում է վիճելու բան էլ չկա.
+որքան interface էլ class-ը իրականացնի, method-ի մարմինը միևնույն է գրում է ինքը՝ մեկ տեղում։</p>
+<p>Իսկ եթե երկու interface պահանջում են միևնույն անունով, բայց տարբեր իմաստով method։ Այդ
+դեպքում կա <b>explicit implementation</b>՝ գրում ես <code>void IFile.Save()</code>՝
+interface-ի անունը առջևից։ Այդպիսի method-ը երևում է միայն այդ interface-ի միջոցով — շփոթություն
+չի լինի։</p>`,
+        code: `// Այսպես ՉԻ ԿԱՐԵԼԻ. class D : B, C  → compiler-ը թույլ չի տա
+
+public interface IFile
+{
+    void Save();      // պահել ֆայլում
+}
+
+public interface ICloud
+{
+    void Save();      // պահել ամպում — նույն անունը, ուրիշ իմաստ
+}
+
+public class Document : IFile, ICloud
+{
+    // explicit implementation. ամեն contract իր version-ն ունի
+    void IFile.Save()  => Console.WriteLine("պահում եմ սկավառակի վրա");
+    void ICloud.Save() => Console.WriteLine("ուղարկում եմ ամպ");
+
+    // class-ի սովորական method — ամենօրյա օգտագործման համար
+    public void Save() => Console.WriteLine("պահում եմ լռելյայն ձևով");
+}
+
+var doc = new Document();
+doc.Save();                    // պահում եմ լռելյայն ձևով
+((IFile)doc).Save();           // պահում եմ սկավառակի վրա
+((ICloud)doc).Save();          // ուղարկում եմ ամպ`,
+        deep: `<p><b>Ավելի խորը։</b> Explicit implementation-ը օգտակար է նաև որպես method-ը
+<i>աչքից հեռացնելու</i> ձև։ Օրինակ՝ collection-ը հնացած <code>IEnumerable.GetEnumerator()</code>-ը
+իրականացնում է explicit, որ խմբագրի հուշումներում կախված լինի միայն ժամանակակից typed
+version-ը։ Մինուսը՝ explicit method-ը կանչելու համար object-ը պետք է բերել interface-ի, իսկ
+<code>struct</code>-ի դեպքում սա նաև boxing է։</p>`,
+        links: [
+          { label: "MS Learn — Explicit interface implementation", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/interfaces/explicit-interface-implementation" },
+          { label: "MS Learn — Why no multiple inheritance", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "Class-ը իրականացնում է IFile և ICloud, և երկուսում էլ կա Save() method տարբեր իմաստով։ Ինչպե՞ս ամեն մեկին տալ իր իրականացումը?",
+          options: [
+            "Ոչ մի կերպ, պետք կլինի interface-ներից մեկում method-ը վերանվանել",
+            "Գրել explicit implementation՝ void IFile.Save() և void ICloud.Save()",
+            "Երկու method-ն էլ դարձնել virtual",
+            "Class-ը ժառանգել երկու interface-ից՝ ինչպես class-երից"
+          ],
+          answer: 1,
+          explain: "Explicit implementation-ը method-ը կապում է կոնկրետ interface-ին։ Կանչել այն կարելի է միայն այդ interface-ի բերելով — երկիմաստություն չի մնում։"
+        }
+      },
+      {
+        id: "oop-15",
+        title: "Բնորոշ սխալներ կապերի մեջ",
+        subtitle: "Project փչացնելու երեք եղանակ",
+        theory: `
+<p>Քննենք երեք իրական սխալ, որոնց պատճառով project-երը դառնում են անշարժ։</p>
+<p><b>1. Inheritance՝ composition-ի փոխարեն։</b> <code>class Car : Engine</code>։ Մեքենան
+շարժիչ չի հանդիսանում — կապը հորինված է։ Արդյունքը՝ մեքենան ընդմիշտ մեխված է շարժիչի մեկ
+type-ին, էլեկտրական չես սարքի։</p>
+<p><b>2. Class-երի պայթյուն։</b> Պետք են ծանուցումներ՝ նամակով, push-ով, շտապ, հետաձգված։
+Սկսում են բազմացնել <code>EmailNotification</code>,
+<code>UrgentEmailNotification</code>, <code>DelayedPushNotification</code>… Իսկ ի՞նչ անել
+«հետաձգումով շտապ push-ի» հետ։ Ամեն նոր հատկանիշ <b>բազմապատկում</b> է class-երի թիվը։
+Բուժվում է composition-ով՝ առաքման ալիքը պահվում է object-ով և դրվում է դրսից։</p>
+<p><b>3. Composition այնտեղ, որտեղ բավական է association-ը։</b> <code>Driver</code>-ը մեքենան
+պահում է field-ով։ Հիմա վարորդը ընդմիշտ կապված է մեկ կոնկրետ մեքենայի՝ չի կարող այլ մեքենա
+նստել, test-ում չես փոխարինի։ Իսկ բավական կլիներ method-ի parameter-ը։</p>
+<p>Ընդհանուր եզրակացությունը մեկն է՝ <b>վերցրու ամենաթույլ կապը, որը բավարարում է։</b></p>`,
+        code: `// ---------- ՍԽԱԼ. class-երի պայթյուն ----------
+// class EmailNotification { }
+// class UrgentEmailNotification : EmailNotification { }
+// class DelayedPushNotification : PushNotification { }   // և այսպես անվերջ
+
+// ---------- ՃԻՇՏ. composition + վարքի փոխարինում ----------
+public interface IChannel
+{
+    void Send(string text);
+}
+
+public class EmailChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"նամակ՝ {text}");
+}
+
+public class PushChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"push՝ {text}");
+}
+
+public class Notification
+{
+    private readonly IChannel _channel;         // ալիքը ՊԱՀՎՈՒՄ Է, ոչ թե ժառանգվում
+    public bool IsUrgent { get; init; }
+
+    public Notification(IChannel channel) => _channel = channel;
+
+    public void Send(string text)
+        => _channel.Send(IsUrgent ? "ՇՏԱՊ! " + text : text);
+}
+
+new Notification(new PushChannel()) { IsUrgent = true }.Send("server-ը ընկավ");
+// շտապ push — և ոչ մի նոր class`,
+        deep: `<p><b>Ավելի խորը։</b> Class-երի պայթյունը այն նշանն է, որ հատկանիշները
+<i>բազմապատկվում</i> են (ալիք × շտապություն × հետաձգում = 8 class, իսկ չորրորդ հատկանիշով՝
+արդեն 16)։ Inheritance-ը գումարել չգիտի — նա տալիս է մեկ ճյուղ։ Composition-ը գիտի՝ ամեն
+հատկանիշ դառնում է առանձին դետալ, և դրանք ազատ համակցվում են։ Այստեղից էլ խորհուրդը՝
+«նախընտրիր composition-ը inheritance-ից» — նա գեղեցկության մասին չէ, այլ թվաբանության։</p>`,
+        links: [
+          { label: "Refactoring Guru — Replace Inheritance with Delegation", url: "https://refactoring.guru/ru/replace-inheritance-with-delegation" },
+          { label: "MS Learn — Inheritance vs composition", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" }
+        ],
+        task: {
+          q: "Driver class-ը Car-ը պահում է field-ով constructor-ում և վարում է միայն նրան։ Ի՞նչ արժե այստեղ փոխել?",
+          options: [
+            "Ոչինչ, այսպես ճիշտ է",
+            "Driver-ը ժառանգել Car-ից",
+            "Car-ը փոխանցել Drive(Car car) method-ի parameter-ով — վարորդին բավական է association, մեքենային տիրելը նրան պետք չէ",
+            "Field-ը դարձնել public"
+          ],
+          answer: 2,
+          explain: "Տիրապետումն այստեղ ավելորդ է՝ վարորդը պարզապես օգտվում է մեքենայից։ Method-ի parameter-ը ազատություն է տալիս — կարելի է նստել ցանկացած մեքենա և հեշտությամբ ուրիշը դնել test-երում։"
+        }
+      },
+      {
+        id: "oop-16",
+        title: "Extension method-եր",
+        subtitle: "Method գրել օտար class-ի վրա",
+        theory: `
+<p>Քեզ պետք է <code>string</code>-ի մոտ <code>ToSlug()</code> method, որը «Բարև Աշխարհ»-ը
+դարձնում է «բարև-աշխարհ»։ Բայց <code>string</code>-ը գրված է Microsoft-ում, ներս մտնել չի
+կարելի, իսկ նրանից ժառանգելը արգելված է։</p>
+<p><b>Extension method</b>-ը լուծում է սա՝ դու գրում ես method-ը <i>դրսում</i>, իսկ կանչում ես
+այնպես, կարծես նա միշտ class-ի մեջ էր։ Կանոնները պարզ են և ընդամենը չորսն են՝</p>
+<ol>
+<li>class-ը պետք է լինի <code>static</code>։</li>
+<li>method-ը պետք է լինի <code>static</code>։</li>
+<li>առաջին parameter-ը նշվում է <code>this</code> բառով — սա էլ հենց այն type-ն է, որը
+ընդլայնում ենք։</li>
+<li><code>this</code> լինում է միայն առաջին parameter-ի մոտ։</li>
+</ol>
+<p>Այստեղ ոչ մի կախարդանք չկա՝ compiler-ը պարզապես վերագրում է <code>text.ToSlug()</code>-ը
+<code>StringExtensions.ToSlug(text)</code>-ի։ Սա <i>syntactic sugar</i> է — այսինքն միևնույն
+կանչի ավելի հաճելի գրելաձևը։</p>
+<p>Հենց սրա վրա է կառուցված ամբողջ LINQ-ը՝ <code>Where</code>, <code>Select</code>,
+<code>OrderBy</code> — սովորական extension method-եր <code>IEnumerable&lt;T&gt;</code>-ի
+համար։</p>`,
+        code: `public static class StringExtensions      // 1) class-ը static
+{
+    // 2) method-ը static   3) առաջին parameter-ը this-ով
+    public static string ToSlug(this string text)
+        => text.Trim().ToLower().Replace(" ", "-");
+
+    public static bool IsBlank(this string? text)
+        => string.IsNullOrWhiteSpace(text);
+}
+
+// Կլիներ այսպես՝
+var a = StringExtensions.ToSlug("Բարև Աշխարհ");
+
+// Իսկ կարելի է այսպես — կարծես method-ը միշտ string-ի մոտ էր՝
+var b = "Բարև Աշխարհ".ToSlug();       // բարև-աշխարհ
+
+if ("   ".IsBlank()) Console.WriteLine("դատարկ տող");
+
+// LINQ-ը ուղիղ նույնն է՝ extension method-եր IEnumerable<T>-ի համար
+var evens = new[] { 1, 2, 3, 4 }.Where(x => x % 2 == 0);`,
+        deep: `<p><b>Ավելի խորը։</b> Extension-ները իրենց գինն ունեն։ Նրանք <b>private անդամներ չեն
+տեսնում</b> — class-ից դուրս հասանելի է միայն public-ը, դրա համար էլ սա իսկական OOP չէ։ Դրանք
+հեշտ է «թաքցնել». method-ը ապրում է օտար ֆայլում, և աչքով գտնել այն դժվար է (փրկում է պետք
+եղած namespace-ի <code>using</code>-ը — առանց նրա method-ը պարզապես չի հայտնվի)։ Եվ հաճելի
+մանրուք՝ extension-ը հանգիստ կանչվում է <code>null</code>-ի վրա, չէ՞ որ սա սովորական static
+method է — սրա վրա են կառուցված <code>IsBlank()</code> տիպի ստուգումները։</p>`,
+        links: [
+          { label: "MS Learn — Extension methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "MS Learn — LINQ", url: "https://learn.microsoft.com/en-us/dotnet/csharp/linq/" }
+        ],
+        task: {
+          kind: "write",
+          q: "Գրիր <code>Shout()</code> extension method <code>string</code>-ի համար, որը վերադարձնում է տողը մեծատառերով։ Բավական է ստորագրության մեկ տողը՝ մարմնով։",
+          placeholder: "public static string Shout(...)",
+          must: ["staticstringshout(thisstring"],
+          solution: `public static class StringExtensions
+{
+    public static string Shout(this string text) => text.ToUpper() + "!";
+}
+
+// օգտագործումը՝
+"բարև".Shout();   // ԲԱՐԵՎ!`,
+          explain: "Static class, static method, առաջին parameter-ը this-ով — երեք պարտադիր պայման։ Հետո compiler-ն ինքն է text.Shout()-ը վերածում StringExtensions.Shout(text) կանչի։"
+        }
+      },
+      {
+        id: "oop-17",
+        title: "Extension-ներ ընդդեմ սովորական method-երի",
+        subtitle: "Ո՞վ է հաղթում և ինչ է fluent API-ն",
+        theory: `
+<p>Կարևոր կանոն, որի վրա սայթաքում են նույնիսկ փորձառուները՝ <b>class-ի իսկական method-ը միշտ
+հաղթում է extension method-ին</b>։</p>
+<p>Տրամաբանությունը այսպիսին է՝ compiler-ը սկզբում փնտրում է method-ը type-ի <i>ներսում</i>։
+Գտավ — վերջ, extension-ներին նա նույնիսկ չի նայում։ Եվ <code>virtual</code>-ը, և
+<code>override</code>-ը, և <code>new</code>-ով թաքցված method-ը — բոլորը հաղթում են։
+Extension-ը միանում է <b>միայն այն դեպքում, երբ class-ում համապատասխան method ընդհանրապես
+չկա</b>։</p>
+<p>Այստեղից եզրակացությունը՝ extension-ով չի կարելի «փոխարինել» օտար class-ի վարքը։ Նա միայն
+լրացնում է պակասողը։</p>
+<p>Իսկ բացի այդ extension-ները սիրում են <b>fluent API</b>-ի համար՝ կանչերի շղթաներ։ Գաղտնիքը
+պարզ է՝ եթե method-ը վերադարձնում է ինքը՝ object-ը (<code>return this</code> կամ հենց
+փոփոխված object-ը), հաջորդ կանչը կարելի է գրել անմիջապես նրանից հետո։ Այդպես կարդացվում է
+գրեթե նախադասության պես — հենց դրա համար է LINQ-ը այդքան հաճելի։</p>`,
+        code: `public class A
+{
+    public void Print() => Console.WriteLine("A class-ի method");
+}
+
+public static class Ext
+{
+    public static void Print(this A a) => Console.WriteLine("extension method");
+}
+
+new A().Print();          // "A class-ի method" — extension-ը միշտ պարտվում է
+
+
+// ---------- fluent API. ամեն method վերադարձնում է object-ը ----------
+public class QueryBuilder
+{
+    private readonly List<string> _parts = new();
+
+    public QueryBuilder From(string table)  { _parts.Add($"FROM {table}");  return this; }
+    public QueryBuilder Where(string cond)  { _parts.Add($"WHERE {cond}");  return this; }
+    public QueryBuilder OrderBy(string col) { _parts.Add($"ORDER BY {col}"); return this; }
+
+    public override string ToString() => string.Join(" ", _parts);
+}
+
+var sql = new QueryBuilder()
+    .From("Users")
+    .Where("Age > 18")
+    .OrderBy("Name")
+    .ToString();          // FROM Users WHERE Age > 18 ORDER BY Name`,
+        deep: `<p><b>Ավելի խորը։</b> Այս կանոնը library-ների հեղինակների համար տհաճ հետևանք ունի։
+Եթե դու թողարկել ես <code>Print()</code> extension, իսկ հետո հենց class-ում հայտնվել է իսկական
+<code>Print()</code> — օգտվողների կոդը լուռ կսկսի կանչել այլ method։ Ոչ թե compile-ի սխալ, այլ
+վարքի լուռ փոփոխություն։ Դրա համար extension-ներին տալիս են ավելի կոնկրետ անուններ և պահում են
+առանձին namespace-ում, որը միացնում են գիտակցաբար։</p>`,
+        links: [
+          { label: "MS Learn — Extension methods (binding rules)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "Martin Fowler — Fluent Interface", url: "https://martinfowler.com/bliki/FluentInterface.html" }
+        ],
+        task: {
+          q: "A class-ը ունի <code>Print()</code> method, և գրված է <code>Print()</code> extension A-ի համար։ Ի՞նչը կկանչվի <code>new A().Print()</code>-ի ժամանակ?",
+          options: [
+            "Extension method-ը — նա հայտարարված է ավելի ուշ",
+            "A class-ի method-ը — extension-ները դիտարկվում են միայն այն ժամանակ, երբ class-ում համապատասխան method չկա",
+            "Երկուսն էլ՝ հերթով",
+            "Compile-ի սխալ. երկիմաստ կանչ"
+          ],
+          answer: 1,
+          explain: "Compiler-ը սկզբում փնտրում է method-ը հենց type-ի մեջ։ Գտավ — extension-ներին նույնիսկ չի նայում։ Extension-ով class-ի վարքը փոխարինել հնարավոր չէ։"
+        }
+      }
+    ]
+  },
   {
     id: "generics",
     name: "Generics",
@@ -3055,6 +4193,7 @@ reflection-ը նրանց մոտ ապրում է միայն «տաքացման» 
 
 // Same world order as the Russian data file.
 const WORLD_ORDER = [
+  "oop",
   "dsa",
   "enumerables",
   "delegates",

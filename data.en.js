@@ -5,6 +5,1126 @@
    ===================================================================== */
 (function () {
 const WORLDS = [
+  /* ================= WORLD: OOP ================= */
+  {
+    id: "oop",
+    name: "OOP: Objects & Relationships",
+    icon: "⬢",
+    blurb: "Classes, encapsulation, inheritance, polymorphism, interfaces and the links between objects — the foundation everything else sits on.",
+    levels: [
+      {
+        id: "oop-1",
+        title: "Class and object",
+        subtitle: "The cookie cutter and the cookie",
+        theory: `
+<p>There is a cookie cutter, and there are cookies. One cutter, as many cookies as you like,
+and each one is its own: this one has chocolate, that one has nuts.</p>
+<p>A <b>class</b> is the cutter. A description: what data a thing has and what it can do.
+An <b>object</b> is one actual cookie made with that cutter. The word <code>new</code> means
+exactly that — "make me one more of these".</p>
+<p>Two things live inside a class:</p>
+<ul>
+<li><b>data</b> — fields and properties (what the object <i>knows</i>: name, health, balance);</li>
+<li><b>behaviour</b> — methods (what the object <i>can do</i>: run, pay, say hello).</li>
+</ul>
+<p>The big idea of OOP in one sentence: <b>data and the actions on it live together</b>, in one
+box, instead of being scattered across the program. Then your program isn't a pile of functions,
+it's a company of objects talking to each other.</p>`,
+        code: `// The class — the cutter (the description)
+public class Player
+{
+    // data: what the object knows
+    public string Name { get; set; }
+    public int Health { get; set; } = 100;
+
+    // behaviour: what the object can do
+    public void TakeDamage(int amount)
+    {
+        Health -= amount;
+        Console.WriteLine($"{Name} took {amount}, {Health} left");
+    }
+}
+
+// Objects — actual instances, each with its own data
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+anna.TakeDamage(30);   // Anna: 70
+bob.TakeDamage(10);    // Bob: 90  — Anna's data is untouched`,
+        deep: `<p><b>Deeper:</b> an object of a class lives on the heap, and the variable only holds a
+<i>reference</i> to it — like a slip of paper with a house address, not the house itself. So if you
+write <code>var b = a;</code>, there is still one house but two slips of paper: change something
+through <code>b</code> and you'll see it through <code>a</code> too. A <code>struct</code> behaves
+differently: it gets copied whole.</p>`,
+        links: [
+          { label: "MS Learn — Classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes" },
+          { label: "MS Learn — Objects", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/objects" }
+        ],
+        task: {
+          q: "What is the difference between a class and an object?",
+          options: [
+            "They are two names for the same thing",
+            "A class is the description (the cutter), an object is one actual instance made from that description",
+            "An object is a file and a class is a folder",
+            "A class holds data and an object only holds methods"
+          ],
+          answer: 1,
+          explain: "You write the class once, then you can make as many objects from it as you want, and each one has its own field values."
+        }
+      },
+      {
+        id: "oop-2",
+        title: "Encapsulation",
+        subtitle: "Don't reach inside — there are buttons",
+        theory: `
+<p>A cash machine has no hole you can stick your hand through to touch the money. It has buttons:
+"withdraw", "deposit". The machine decides for itself whether your request is allowed.</p>
+<p><b>Encapsulation</b> is exactly that: hide the data inside the object and expose only safe
+"buttons". Make fields <code>private</code> and give access through properties and methods, where
+you can <b>check</b> that the request makes sense.</p>
+<p>Why bother, if you could just make the field <code>public</code>? Because anyone can ruin a
+public field — for example, write minus a million into the balance. And then the one to blame
+isn't whoever ruined it, it's your class, because your class was supposed to make that state
+impossible.</p>
+<p>The rule is simple: <b>an object must always be in a valid state</b>. The checks live inside
+the class, not sprinkled all over the program.</p>`,
+        code: `// BAD: data wide open, anyone can break it
+public class BadAccount
+{
+    public decimal Balance;      // anybody: acc.Balance = -1000;
+}
+
+// GOOD: field hidden, access through buttons that check
+public class BankAccount
+{
+    private decimal _balance;                    // nobody outside can reach it
+
+    public decimal Balance => _balance;          // read only
+
+    public void Deposit(decimal amount)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("Amount must be greater than zero");
+        _balance += amount;
+    }
+
+    public bool TryWithdraw(decimal amount)
+    {
+        if (amount <= 0 || amount > _balance) return false;   // can't go negative
+        _balance -= amount;
+        return true;
+    }
+}`,
+        deep: `<p><b>Deeper:</b> encapsulation is not "write a getter and a setter for every field".
+The property <code>public int Age { get; set; }</code> protects exactly nothing: it's the same
+public field, just longer. Real encapsulation starts where there is a <i>rule</i>: an age is never
+negative, a balance never goes below zero, an order can't be paid for twice. No rules — don't
+invent wrappers for the sake of wrappers.</p>`,
+        links: [
+          { label: "MS Learn — Properties", url: "https://learn.microsoft.com/en-us/dotnet/csharp/properties" },
+          { label: "MS Learn — Access modifiers", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/access-modifiers" }
+        ],
+        task: {
+          kind: "write",
+          q: "A class has the field <code>private int _age;</code>. Write a property <code>Age</code> that hands the value out but does NOT let anything outside change it (read only).",
+          placeholder: "public int Age => ...",
+          must: ["publicintage=>_age"],
+          solution: `private int _age;
+
+public int Age => _age;          // short form: get only
+
+// the same thing, spelled out:
+// public int Age { get { return _age; } }`,
+          explain: "A property with only a get hands the value out, and only code inside the class can change it. That is controlled access."
+        }
+      },
+      {
+        id: "oop-3",
+        title: "The three links between objects",
+        subtitle: "is-a, has-a, uses-a — and why this matters more than the code",
+        theory: `
+<p>Objects don't live alone. There are exactly three kinds of relationship between them, and
+almost all of architecture is picking the right one.</p>
+<ul>
+<li><b>is-a</b> — a dog <i>is</i> an animal. This is <b>inheritance</b>.</li>
+<li><b>has-a</b> — a car <i>has</i> an engine. This is <b>composition</b> (strong, the engine is
+no use without the car) or <b>aggregation</b> (weak, a player exists without the team).</li>
+<li><b>uses-a</b> — a driver <i>uses</i> a car. This is <b>association</b>.</li>
+</ul>
+<p>The test is easy: say the link out loud as a normal human sentence. "A car is an engine" sounds
+like nonsense — so inheritance is wrong here. "A car has an engine" sounds fine, so it's has-a.</p>
+<p>Remember this above all: <b>bad programs usually break not because the logic is wrong, but
+because the links between objects were chosen wrong.</b> A bug in a method takes a minute to fix;
+a bug in the links takes rewriting half the project.</p>`,
+        code: `// is-a — inheritance
+class Animal { }
+class Dog : Animal { }             // a Dog IS an Animal
+
+// has-a (strong) — composition: the part is born and dies with the whole
+class Car
+{
+    private readonly Engine _engine = new Engine();   // the car OWNS the engine
+}
+
+// has-a (weak) — aggregation: parts come from outside and live on their own
+class Team
+{
+    private readonly List<Player> _players;
+    public Team(List<Player> players) => _players = players;  // players existed before the team
+}
+
+// uses-a — association: use it, then let it go
+class Driver
+{
+    public void Drive(Car car) => car.Start();   // doesn't keep the car
+}`,
+        deep: `<p><b>Deeper:</b> the strength of a link grows like this: <i>uses-a → aggregation →
+composition → inheritance</i>. The stronger the link, the less freedom your code has later. So the
+rule of thumb is: take the <b>weakest link that's enough</b> for the job. If passing the object as
+a parameter is enough — don't store it in a field. If a field is enough — don't inherit.</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — relationships between objects", url: "https://refactoring.guru/ru/design-patterns/what-is-pattern" }
+        ],
+        task: {
+          q: "A programmer wrote <code>class Car : Engine</code>. What's wrong here?",
+          options: [
+            "Nothing, the engine is an important part of a car",
+            "The link is wrong: a car is not an engine, it has one — this should be composition",
+            "Engine should have inherited from Car",
+            "The only problem is the class name"
+          ],
+          answer: 1,
+          explain: "Inheritance expresses is-a. \"A car is an engine\" is false, so the right answer is an Engine field inside Car (has-a)."
+        }
+      },
+      {
+        id: "oop-4",
+        title: "Inheritance (is-a)",
+        subtitle: "Write the shared part once",
+        theory: `
+<p>An enemy, a player and a boss in a game have a lot in common: a name, health, the ability to
+take damage. Copying that into every class means fixing the same bug three times.</p>
+<p><b>Inheritance</b> lets you move the shared part into a <b>base class</b>; the children get all
+of it for free and add their own bits. You write it with a colon: <code>class Enemy : Entity</code>
+— "an Enemy is an Entity".</p>
+<p>Things worth knowing:</p>
+<ul>
+<li>In C# a class can have <b>only one</b> base class. Interfaces — as many as you like.</li>
+<li>A child sees the parent's <code>public</code> and <code>protected</code> members, but not the
+<code>private</code> ones.</li>
+<li><code>protected</code> means "family only": invisible from outside, visible to children.</li>
+</ul>
+<p>And be careful: deep inheritance chains (class → class → class → class) get fragile. You change
+something at the top and something at the bottom breaks unexpectedly. Two levels is usually
+enough.</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    protected int Health = 100;               // family only: visible to children
+
+    public void TakeDamage(int amount) => Health -= amount;   // shared behaviour
+}
+
+public class Enemy : Entity            // an Enemy IS an Entity
+{
+    public int Damage { get; init; } = 10;
+    public void Attack(Entity target) => target.TakeDamage(Damage);
+}
+
+public class Player : Entity           // and so is a Player
+{
+    public void Heal(int amount) => Health += amount;   // Health is reachable: protected
+}
+
+var enemy = new Enemy { Name = "Goblin" };
+var hero  = new Player { Name = "Anna" };
+enemy.Attack(hero);            // the base class method works for both`,
+        deep: `<p><b>Deeper:</b> inheritance is the strongest link in the language: the child is nailed
+to the parent's internals. This is called the <i>fragile base class problem</i>: an innocent change
+in the parent quietly breaks the children. That's why the modern advice is <b>"prefer composition
+over inheritance"</b>: inherit only when is-a is genuinely true and the behaviour is shared
+forever.</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "MS Learn — protected", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/protected" }
+        ],
+        task: {
+          q: "What does the <code>protected</code> modifier mean?",
+          options: [
+            "The member is visible to everyone, like public",
+            "The member is visible only inside the class itself",
+            "The member is visible inside the class and in derived classes, but not from outside",
+            "The member can't be changed after the object is created"
+          ],
+          answer: 2,
+          explain: "protected is \"private to strangers, public to children\": you can't reach it from outside, but a child uses it freely."
+        }
+      },
+      {
+        id: "oop-5",
+        title: "The base keyword",
+        subtitle: "Calling the parent for help",
+        theory: `
+<p>Sometimes a child doesn't want to replace the parent's behaviour completely — it wants to
+<i>add to</i> it. "Do the usual thing, then also this."</p>
+<p>That's what the word <code>base</code> is for. It means "the parent's version":</p>
+<ul>
+<li><code>base.Describe()</code> — call the parent's method from an overridden method;</li>
+<li><code>: base(name)</code> — call the parent's <b>constructor</b>, so it can set up its part of
+the object.</li>
+</ul>
+<p>An important point about constructors: an object is built <b>bottom-up</b> — the base class
+constructor runs first, then the child's. If the parent has no empty constructor, the child
+<b>must</b> call a suitable one explicitly with <code>: base(...)</code>, or the code won't
+compile.</p>`,
+        code: `public class Employee
+{
+    public string Name { get; }
+    public decimal Salary { get; }
+
+    public Employee(string name, decimal salary)   // there is no empty constructor!
+    {
+        Name = name;
+        Salary = salary;
+    }
+
+    public virtual string Describe() => $"{Name}, salary {Salary}";
+}
+
+public class Manager : Employee
+{
+    public int TeamSize { get; }
+
+    // the parent sets up Name and Salary first, then we set TeamSize
+    public Manager(string name, decimal salary, int teamSize)
+        : base(name, salary)
+    {
+        TeamSize = teamSize;
+    }
+
+    // we don't rewrite the parent, we add to it
+    public override string Describe()
+        => base.Describe() + $", team: {TeamSize} people";
+}
+
+Console.WriteLine(new Manager("Anna", 3000, 5).Describe());
+// Anna, salary 3000, team: 5 people`,
+        deep: `<p><b>Deeper:</b> here's a sneaky detail — never call <code>virtual</code> methods from a
+base class constructor. At that moment the child's constructor <i>hasn't run yet</i>, but its
+overridden version will be called anyway — and it will see uninitialised fields (zeros and
+<code>null</code>). The kind of bug people hunt for half a day.</p>`,
+        links: [
+          { label: "MS Learn — base", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/base" },
+          { label: "MS Learn — Constructors", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors" }
+        ],
+        task: {
+          kind: "write",
+          q: "The class <code>Employee</code> only has the constructor <code>Employee(string name)</code>. Write the constructor of the child <code>Manager(string name)</code> that passes the name to the parent.",
+          placeholder: "public Manager(string name) ...",
+          must: ["base(name)"],
+          solution: `public Manager(string name) : base(name)
+{
+    // your own setup goes here
+}`,
+          explain: "If the parent has no parameterless constructor, the child must explicitly call a suitable one with : base(...). The parent sets up its part of the object first."
+        }
+      },
+      {
+        id: "oop-6",
+        title: "Association (uses-a)",
+        subtitle: "Use it, then let it go",
+        theory: `
+<p>A teacher uses a whiteboard. The board doesn't belong to them, it hangs in the classroom and
+will outlive any teacher. They just met for the length of one lesson.</p>
+<p><b>Association</b> is the weakest link: an object <i>gets another object for a while</i>,
+usually as a method parameter, and doesn't keep it. No ownership, no control over its lifetime.</p>
+<p>Why this is useful:</p>
+<ul>
+<li>the objects stay <b>independent</b> — easy to reuse;</li>
+<li>the class is easy to test: hand it a different board and you're done;</li>
+<li>no tight coupling where "touch one thing and everything falls apart".</li>
+</ul>
+<p>The sign of association in code is very simple: <b>the object arrives as a parameter, it doesn't
+sit in a field.</b></p>`,
+        code: `public class Whiteboard
+{
+    public void Write(string text) => Console.WriteLine($"[board] {text}");
+}
+
+public class Teacher
+{
+    public string Name { get; init; } = "";
+
+    // the board comes for the lesson and leaves — that's association
+    public void Teach(Whiteboard board, string topic)
+    {
+        board.Write($"{topic} — lesson by {Name}");
+    }
+}
+
+var board = new Whiteboard();          // the board exists on its own
+var anna  = new Teacher { Name = "Anna" };
+var bob   = new Teacher { Name = "Bob" };
+
+anna.Teach(board, "OOP");              // both use the same board
+bob.Teach(board, "LINQ");`,
+        deep: `<p><b>Deeper:</b> association is exactly what <i>dependency injection</i> is built on. A
+class doesn't create its helpers with <code>new</code>, it receives them from outside — as a method
+or constructor parameter. Then in tests you can hand it a fake version and in production the real
+one, without rewriting the class itself.</p>`,
+        links: [
+          { label: "MS Learn — Dependency injection", url: "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection" },
+          { label: "MS Learn — Methods & parameters", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods" }
+        ],
+        task: {
+          q: "How do you tell association (uses-a) from composition (has-a) straight from the code?",
+          options: [
+            "By the class name",
+            "With association the object arrives as a parameter and isn't stored; with composition it sits in a field and belongs to the owner",
+            "Association is always written through an interface",
+            "There is no difference, they're the same thing"
+          ],
+          answer: 1,
+          explain: "A parameter = temporary use (uses-a). A field created by and belonging to the class = ownership (has-a, composition)."
+        }
+      },
+      {
+        id: "oop-7",
+        title: "Aggregation (weak has-a)",
+        subtitle: "The part is there, but it lives its own life",
+        theory: `
+<p>A team has players. The team breaks up — the players don't vanish, they just move to other
+teams. A player existed <i>before</i> the team and will outlive it.</p>
+<p><b>Aggregation</b> is "I have this thing, but it isn't mine". The object keeps another object in
+a field, but <b>doesn't create it and isn't responsible for its life</b>. The parts come from
+outside, usually through the constructor.</p>
+<p>Typical examples:</p>
+<ul>
+<li>Team → players</li>
+<li>Department → employees</li>
+<li>Library → books (a book doesn't disappear when the library closes)</li>
+</ul>
+<p>The point is reuse: the same part can belong to several owners, move between them, and carry on
+living when an owner is gone.</p>`,
+        code: `public class Player
+{
+    public string Name { get; init; } = "";
+}
+
+public class Team
+{
+    private readonly List<Player> _players;
+
+    // the players come from OUTSIDE — the team doesn't create them
+    public Team(List<Player> players) => _players = players;
+
+    public void PrintRoster()
+    {
+        foreach (var p in _players) Console.WriteLine(p.Name);
+    }
+}
+
+var anna = new Player { Name = "Anna" };
+var bob  = new Player { Name = "Bob" };
+
+var team = new Team(new List<Player> { anna, bob });
+team.PrintRoster();
+
+team = null;                 // the team is gone...
+Console.WriteLine(anna.Name); // ...but Anna is alive and can play for another team`,
+        deep: `<p><b>Deeper:</b> aggregation has a hidden rock — <i>shared state</i>. If the same player
+sits in two teams, a change made by one team is seen by both. Sometimes that's exactly what you
+want; sometimes it's the source of mysterious bugs. If you want independence, hand out a copy of
+the list (<code>_players.ToList()</code>) or an <code>IReadOnlyList</code>, so somebody else's code
+can't change your collection.</p>`,
+        links: [
+          { label: "MS Learn — Collections", url: "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/list-collection" },
+          { label: "MS Learn — IReadOnlyList", url: "https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ireadonlylist-1" }
+        ],
+        task: {
+          q: "How is aggregation different from composition?",
+          options: [
+            "It isn't, they're synonyms",
+            "With aggregation the part comes from outside and lives independently; with composition it's created by the owner and dies with it",
+            "Aggregation is only possible for collections",
+            "Composition is always through an interface, aggregation through a class"
+          ],
+          answer: 1,
+          explain: "The key is lifetime and ownership: a player outlives the team (aggregation), while a room doesn't outlive the house (composition)."
+        }
+      },
+      {
+        id: "oop-8",
+        title: "Composition (strong has-a)",
+        subtitle: "The part is born and dies with the whole",
+        theory: `
+<p>A house has rooms. Knock the house down and the rooms are gone. A room can't "move to another
+house": it exists only as a part of this one.</p>
+<p><b>Composition</b> is strong ownership: the object <b>creates its own parts</b> and is fully
+responsible for them. It usually doesn't hand them out and doesn't take them from outside.</p>
+<p>Typical examples: house → rooms, car → engine, order → order lines.</p>
+<p>And the most important bit: <b>composition is the modern replacement for inheritance</b>.
+Instead of "becoming something", the object "has something" and passes the work inside. Code like
+that bends instead of breaking: want different behaviour — plug in a different part, don't invent a
+new child class.</p>`,
+        code: `public class Engine
+{
+    public void Start() => Console.WriteLine("Engine started");
+}
+
+public class Car
+{
+    // the car creates the engine ITSELF and owns it
+    private readonly Engine _engine = new Engine();
+
+    public void Start()
+    {
+        _engine.Start();            // delegate the work to our own part
+        Console.WriteLine("Off we go");
+    }
+}
+
+var car = new Car();
+car.Start();
+// you can't reach _engine from outside: it's part of the car, not a separate thing
+
+// car becomes garbage — the engine goes with it`,
+        deep: `<p><b>Deeper:</b> composition is often confused with inheritance, because from the outside
+the result looks the same: <code>Car</code> gets a <code>Start()</code> method. The difference is
+<i>where</i> it came from. With inheritance the behaviour is nailed to the type forever. With
+composition the part can be swapped — even while the program is running. That's where the Strategy
+pattern grows from: a class keeps its behaviour as an object and changes it on the fly.</p>`,
+        links: [
+          { label: "MS Learn — Object-oriented programming", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" },
+          { label: "Refactoring Guru — Strategy", url: "https://refactoring.guru/ru/design-patterns/strategy" }
+        ],
+        task: {
+          kind: "write",
+          q: "Write a class <code>House</code> that OWNS a room: a private field <code>_room</code> of type <code>Room</code>, created by the class itself.",
+          placeholder: "public class House ...",
+          must: ["private", "_room=newroom()"],
+          solution: `public class House
+{
+    private readonly Room _room = new Room();   // the house creates the room itself
+}`,
+          explain: "The part is created inside the owner and doesn't come from outside — that's composition: no house, no room."
+        }
+      },
+      {
+        id: "oop-9",
+        title: "Generalization",
+        subtitle: "Spot the repetition — lift it up",
+        theory: `
+<p>A car has wheels and can move. So does a bike. So does a truck. Copying the same thing into
+three classes is boring and dangerous.</p>
+<p><b>Generalization</b> is a process: you look at several similar classes, find what they share,
+and pull it up into a common parent. You end up with <code>Vehicle</code>, and <code>Car</code> and
+<code>Bike</code> become special cases of it.</p>
+<p>Generalization is the flip side of inheritance. Inheritance is the <i>result</i> ("Car is-a
+Vehicle"), generalization is the <i>path</i> you take to get there: bottom-up, from the specific to
+the general.</p>
+<p>One important point: generalize <b>when the repetition is actually there</b>, not in advance.
+First write two or three concrete classes, see what they really share — and only then lift it up.
+Parents invented ahead of time "for the future" almost always turn out to be awkward.</p>`,
+        code: `// Before: two classes with identical chunks
+// class Car  { public int Wheels = 4; public void Move() {...} }
+// class Bike { public int Wheels = 2; public void Move() {...} }
+
+// After: the shared part has been lifted up
+public abstract class Vehicle
+{
+    public int Wheels { get; protected set; }
+    public virtual void Move() => Console.WriteLine("A vehicle is moving");
+}
+
+public class Car : Vehicle
+{
+    public Car() => Wheels = 4;
+    public override void Move() => Console.WriteLine("The car runs on petrol");
+}
+
+public class Bike : Vehicle
+{
+    public Bike() => Wheels = 2;
+    public override void Move() => Console.WriteLine("The bike runs on pedals");
+}
+
+Vehicle[] garage = { new Car(), new Bike() };
+foreach (var v in garage) v.Move();   // each one moves its own way`,
+        deep: `<p><b>Deeper:</b> there's a trap — <i>false generalization</i>. Two classes can happen to
+have similar fields without being relatives. A product discount and an employee discount both have
+a <code>Percent</code>, but a shared base class <code>Discount</code> will only tie your hands:
+tomorrow the rules diverge and you'll be untangling it. A shared <i>meaning</i> matters more than
+shared fields.</p>`,
+        links: [
+          { label: "MS Learn — Inheritance", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance" },
+          { label: "Refactoring Guru — Extract Superclass", url: "https://refactoring.guru/ru/extract-superclass" }
+        ],
+        task: {
+          q: "What is generalization?",
+          options: [
+            "Turning a class into a generic with a parameter T",
+            "Lifting the shared features of several classes into a common parent class",
+            "Deleting unnecessary methods from a class",
+            "Replacing classes with interfaces"
+          ],
+          answer: 1,
+          explain: "Generalization is a bottom-up move: you find what several classes repeat and turn it into a base class. It has nothing to do with generics."
+        }
+      },
+      {
+        id: "oop-10",
+        title: "Abstract classes",
+        subtitle: "A blank you can't turn into a thing",
+        theory: `
+<p>A "shape" is not a thing. You can draw a circle or a square, but you can't draw just "a shape".
+Yet all shapes have something in common: an area, a colour, a way to be drawn.</p>
+<p>An <b>abstract class</b> is a class you <b>can't create an object from</b>
+(<code>new Shape()</code> won't compile), but you can inherit from it. It combines two things:</p>
+<ul>
+<li><b>ready-made shared code</b> — ordinary methods and fields the children get for free;</li>
+<li><b>obligations</b> — <code>abstract</code> members with no body: a child <i>must</i> implement
+them, or it won't compile.</li>
+</ul>
+<p>That's the difference from an interface: an interface is obligations only, with no code; an
+abstract class is obligations <i>plus</i> shared code. Reach for an abstract class when related
+classes share an implementation you'd hate to copy.</p>`,
+        code: `public abstract class Shape
+{
+    public string Color { get; init; } = "black";
+
+    // an obligation: no body, the child MUST write its own
+    public abstract double Area();
+
+    // shared ready-made code: every child gets it for free
+    public void Describe()
+        => Console.WriteLine($"{GetType().Name} ({Color}), area {Area():0.00}");
+}
+
+public class Circle : Shape
+{
+    public double Radius { get; init; }
+    public override double Area() => Math.PI * Radius * Radius;
+}
+
+public class Rect : Shape
+{
+    public double W { get; init; }
+    public double H { get; init; }
+    public override double Area() => W * H;
+}
+
+// var s = new Shape();          // COMPILE ERROR: the class is abstract
+Shape[] shapes = { new Circle { Radius = 2 }, new Rect { W = 3, H = 4 } };
+foreach (var s in shapes) s.Describe();`,
+        deep: `<p><b>Deeper:</b> <code>abstract</code> and <code>virtual</code> are easy to mix up.
+<code>virtual</code> means "I have a working version, you may replace it". <code>abstract</code>
+means "there is no version at all, you must write one". An abstract member can only live in an
+abstract class: otherwise you could create an object with a hole where a method should be.</p>`,
+        links: [
+          { label: "MS Learn — abstract", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/abstract" },
+          { label: "MS Learn — Abstract and sealed classes", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/abstract-and-sealed-classes-and-class-members" }
+        ],
+        task: {
+          q: "What is the difference between an <code>abstract</code> and a <code>virtual</code> method?",
+          options: [
+            "None, they're synonyms",
+            "abstract has no body and must be implemented; virtual has a working body and is overridden only if you want to",
+            "virtual can only be declared in interfaces",
+            "abstract is faster"
+          ],
+          answer: 1,
+          explain: "abstract is an obligation with no implementation; virtual is a default implementation a child may replace but doesn't have to."
+        }
+      },
+      {
+        id: "oop-11",
+        title: "Polymorphism",
+        subtitle: "One command, different behaviour",
+        theory: `
+<p>Say "move" to a class — a human runs on legs, a bird flies, a fish swims. One command, different
+performances. That's <b>polymorphism</b> ("many forms").</p>
+<p>In C# it works like this:</p>
+<ul>
+<li>in the base class the method is marked <code>virtual</code> — "this version can be replaced";</li>
+<li>in the child you write <code>override</code> — your own version;</li>
+<li>the variable may have the parent's type, but <b>the object's real type always decides</b> — and
+it decides <i>while the program is running</i>, not at compile time.</li>
+</ul>
+<p>Why this matters: code that walks through an <code>Entity[]</code> array knows nothing about
+bosses and players. Tomorrow you add a new enemy type and that code <b>doesn't need touching</b>.
+This is what OOP was invented for.</p>
+<p>There's also <code>sealed override</code> — "I overrode it, and no further changes allowed".
+That's how you freeze behaviour nobody should mess with.</p>`,
+        code: `public class Entity
+{
+    public string Name { get; init; } = "";
+    public virtual void Update() => Console.WriteLine($"{Name} is standing still");
+}
+
+public class Enemy : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} is looking for the player");
+}
+
+public class Player : Entity
+{
+    public override void Update() => Console.WriteLine($"{Name} is listening to the keyboard");
+}
+
+public class Boss : Enemy
+{
+    // sealed: this version can't be overridden any further
+    public sealed override void Update() => Console.WriteLine($"{Name} is charging an attack");
+}
+
+Entity[] world = { new Player { Name = "Anna" },
+                   new Enemy  { Name = "Goblin" },
+                   new Boss   { Name = "Dragon" } };
+
+foreach (var e in world)
+    e.Update();     // the variable's type is Entity, but the REAL type's version runs
+
+// Anna is listening to the keyboard / Goblin is looking for the player / Dragon is charging an attack`,
+        deep: `<p><b>Deeper:</b> here's how it works inside — every type has a table of virtual methods
+(a <i>v-table</i>), a small list of "which method to actually call". That's why the call is decided
+while the program runs. The price is one extra pointer hop, which costs next to nothing. But
+<code>new</code> instead of <code>override</code> is not polymorphism, it's <i>hiding</i>: there the
+choice is made by the variable's type, and the result is almost always a surprise. Write
+<code>override</code> if you want real replacement.</p>`,
+        links: [
+          { label: "MS Learn — Polymorphism", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism" },
+          { label: "MS Learn — virtual / override", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/virtual" }
+        ],
+        task: {
+          kind: "write",
+          q: "The base class has <code>public virtual void Update()</code>. In the child, write your own version of this method so that yours is the one that runs (a real override, not hiding).",
+          placeholder: "public ... void Update() ...",
+          must: ["overridevoidupdate()"],
+          solution: `public override void Update()
+{
+    Console.WriteLine("The child's own logic");
+}`,
+          explain: "Only override gives real polymorphism: the call is decided by the object's real type. The word new would just have hidden the parent's method."
+        }
+      },
+      {
+        id: "oop-12",
+        title: "Interfaces and abstraction",
+        subtitle: "A contract: what you can do, not how",
+        theory: `
+<p>You can plug a kettle, a lamp or a charger into a socket. The socket doesn't care what's inside
+the device — what matters is that it has the right plug. The plug is a <b>contract</b>.</p>
+<p>An <b>interface</b> is a list of what a class <i>must be able to do</i>, without a single line
+about <i>how</i> it does it. Classes "sign the contract" with a <code>:</code> and write their own
+implementation. By tradition, interface names start with <code>I</code>.</p>
+<p>And <b>abstraction</b> is the habit of working with contracts instead of concrete classes. Your
+code depends on <code>IRepository</code>, and behind it there may be a database, a file or a fake
+for a test — the code doesn't care.</p>
+<p>Why:</p>
+<ul>
+<li><b>decoupling</b> — you change the implementation without touching whoever uses it;</li>
+<li><b>tests</b> — easy to slip in a fake implementation;</li>
+<li><b>flexibility</b> — a class can implement <b>any number</b> of interfaces, even though it only
+has one base class.</li>
+</ul>`,
+        code: `public interface IRenderable      // contract: I can be drawn
+{
+    void Render();
+}
+
+public interface IUpdatable       // contract: I can be updated
+{
+    void Update();
+}
+
+// one class — several contracts at once
+public class Player : IRenderable, IUpdatable
+{
+    public void Render() => Console.WriteLine("drawing the player");
+    public void Update() => Console.WriteLine("moving the player");
+}
+
+public class Rock : IRenderable   // a rock only gets drawn
+{
+    public void Render() => Console.WriteLine("drawing the rock");
+}
+
+// the code works with the contract and knows nothing about the concrete classes
+List<IRenderable> scene = new() { new Player(), new Rock() };
+foreach (var item in scene) item.Render();`,
+        deep: `<p><b>Deeper:</b> when do you take an interface and when an abstract class? An interface is
+about an <i>ability</i> ("can be drawn"), and classes from completely different families can have
+it. An abstract class is about <i>kinship</i> ("this is a shape") plus shared code. In practice:
+start with an interface, and add an abstract class when shared code appears that you'd hate to
+copy. And keep interfaces small: <code>IRenderable</code> with one method is more useful than
+<code>IEverything</code> with twenty.</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces" },
+          { label: "MS Learn — Interfaces vs abstract classes", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "Why can a class implement many interfaces but inherit from only one class?",
+          options: [
+            "It was decided that way to make the syntax look nice",
+            "Interfaces only set a contract with no implementation, so there's nothing to clash; classes can have competing implementations of the same method",
+            "Interfaces are faster than classes",
+            "Actually C# does let you inherit from several classes"
+          ],
+          answer: 1,
+          explain: "Multiple class inheritance raises the question \"whose implementation do we take?\". Interfaces have no implementation — nothing to take, so no conflict."
+        }
+      },
+      {
+        id: "oop-13",
+        title: "What you can declare in an interface",
+        subtitle: "The allowed and the forbidden list",
+        theory: `
+<p>An interface describes <i>abilities</i>, not internals. That's exactly what decides what you can
+put in it and what you can't.</p>
+<p><b>Allowed:</b></p>
+<ul>
+<li><b>methods</b> — the most common: a signature with no body;</li>
+<li><b>properties</b> — with <code>get</code>, <code>set</code> or both;</li>
+<li><b>events</b> — for subscribing and notifying;</li>
+<li><b>indexers</b> — array-style access: <code>obj[0]</code>.</li>
+</ul>
+<p><b>Not allowed:</b></p>
+<ul>
+<li><b>fields</b> — an interface stores no data, it's about behaviour;</li>
+<li><b>constructors</b> — an interface doesn't control how objects are created;</li>
+<li><b>destructors</b>;</li>
+<li><b>access modifiers</b> — everything is public anyway, writing <code>public</code> is pointless;</li>
+<li><b>static members</b> — with one exception: <code>static abstract</code> from C# 11, for generic
+maths.</li>
+</ul>`,
+        code: `public interface IStorage
+{
+    // method — a signature with no body
+    void Save(string data);
+
+    // property
+    int Count { get; }
+
+    // event
+    event Action<string> Saved;
+
+    // indexer
+    string this[int index] { get; }
+
+    // private int _size;              // ERROR: no fields
+    // public IStorage() { }           // ERROR: no constructors
+    // public void Save(string d);     // ERROR: the modifier doesn't belong here
+}
+
+public class MemoryStorage : IStorage
+{
+    private readonly List<string> _items = new();   // the field lives in the CLASS
+
+    public int Count => _items.Count;
+    public string this[int index] => _items[index];
+    public event Action<string>? Saved;
+
+    public void Save(string data)
+    {
+        _items.Add(data);
+        Saved?.Invoke(data);
+    }
+}`,
+        deep: `<p><b>Deeper:</b> since C# 8 interfaces can have <i>default interface methods</i> — methods
+with an implementation. That wasn't added for convenience, but so you can add a method to a
+published interface without breaking everyone who already implements it. Use it rarely: if there's
+a lot of implementation, it isn't a contract any more, it's an abstract class in disguise.</p>`,
+        links: [
+          { label: "MS Learn — Interfaces", url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/interface" },
+          { label: "MS Learn — Default interface methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/interface-implementation/default-interface-methods-versions" }
+        ],
+        task: {
+          q: "Which of these can NOT be declared in an interface?",
+          options: [
+            "A method with no body",
+            "A property with get and set",
+            "A field for storing data",
+            "An event"
+          ],
+          answer: 2,
+          explain: "An interface stores no data — there are no fields in it. Methods, properties, events and indexers are all fine."
+        }
+      },
+      {
+        id: "oop-14",
+        title: "The diamond problem",
+        subtitle: "Why you can't inherit from two classes",
+        theory: `
+<p>Imagine: class <b>A</b> can do <code>DoWork()</code>. Classes <b>B</b> and <b>C</b> inherit from
+A and each rewrites <code>DoWork()</code> its own way. Now class <b>D</b> wants to inherit from both
+B and C. Question: whose <code>DoWork()</code> does it get — B's or C's?</p>
+<p>There is no answer. Drawn out, the inheritance diagram looks like a diamond, which is why this is
+called the <b>diamond problem</b>. It's exactly why C# <b>forbids inheriting from more than one
+class</b>: better to live without the feature than with unpredictable code.</p>
+<p>The replacement is interfaces. They have no implementation, so there's nothing to argue about:
+however many interfaces a class implements, it still writes the method body itself, in one place.</p>
+<p>And what if two interfaces demand a method with the same name but a different meaning? Then
+there's <b>explicit implementation</b>: you write <code>void IFile.Save()</code> with the interface
+name in front. Such a method is only visible through that interface — no confusion.</p>`,
+        code: `// NOT allowed: class D : B, C  → the compiler won't accept it
+
+public interface IFile
+{
+    void Save();      // save to a file
+}
+
+public interface ICloud
+{
+    void Save();      // save to the cloud — same name, different meaning
+}
+
+public class Document : IFile, ICloud
+{
+    // explicit implementation: each contract gets its own version
+    void IFile.Save()  => Console.WriteLine("saving to disk");
+    void ICloud.Save() => Console.WriteLine("sending to the cloud");
+
+    // an ordinary class method — for everyday use
+    public void Save() => Console.WriteLine("saving the default way");
+}
+
+var doc = new Document();
+doc.Save();                    // saving the default way
+((IFile)doc).Save();           // saving to disk
+((ICloud)doc).Save();          // sending to the cloud`,
+        deep: `<p><b>Deeper:</b> explicit implementation is also handy as a way to <i>get a method out of
+sight</i>. For example, a collection implements the old <code>IEnumerable.GetEnumerator()</code>
+explicitly, so only the modern typed version shows up in the editor's suggestions. The downside: to
+call an explicit method you have to cast the object to the interface — and for a <code>struct</code>
+that also means boxing.</p>`,
+        links: [
+          { label: "MS Learn — Explicit interface implementation", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/interfaces/explicit-interface-implementation" },
+          { label: "MS Learn — Why no multiple inheritance", url: "https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/choosing-between-class-and-interface" }
+        ],
+        task: {
+          q: "A class implements IFile and ICloud, and both have a Save() method with a different meaning. How do you give each one its own implementation?",
+          options: [
+            "You can't, you'll have to rename the method in one of the interfaces",
+            "Write explicit implementations: void IFile.Save() and void ICloud.Save()",
+            "Make both methods virtual",
+            "Inherit the class from both interfaces as if they were classes"
+          ],
+          answer: 1,
+          explain: "Explicit implementation ties a method to one specific interface. You can only call it by casting to that interface — no ambiguity left."
+        }
+      },
+      {
+        id: "oop-15",
+        title: "Common mistakes with links",
+        subtitle: "Three ways to ruin a project",
+        theory: `
+<p>Let's look at three real mistakes that turn projects into concrete.</p>
+<p><b>1. Inheritance instead of composition.</b> <code>class Car : Engine</code>. A car is not an
+engine — the link is made up. The result: the car is nailed to one engine type forever, and you
+can't build an electric one.</p>
+<p><b>2. Class explosion.</b> You need notifications: by email, by push, urgent, delayed. People
+start breeding <code>EmailNotification</code>, <code>UrgentEmailNotification</code>,
+<code>DelayedPushNotification</code>… And what do you do with "an urgent push with a delay"? Every
+new feature <b>multiplies</b> the number of classes. The cure is composition: the delivery channel
+is stored as an object and plugged in.</p>
+<p><b>3. Composition where association would do.</b> <code>Driver</code> keeps the car in a field.
+Now the driver is tied to one specific car forever: can't switch, can't swap it in a test. A method
+parameter would have been enough.</p>
+<p>One conclusion for all three: <b>take the weakest link that's enough.</b></p>`,
+        code: `// ---------- MISTAKE: class explosion ----------
+// class EmailNotification { }
+// class UrgentEmailNotification : EmailNotification { }
+// class DelayedPushNotification : PushNotification { }   // and so on forever
+
+// ---------- RIGHT: composition + pluggable behaviour ----------
+public interface IChannel
+{
+    void Send(string text);
+}
+
+public class EmailChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"email: {text}");
+}
+
+public class PushChannel : IChannel
+{
+    public void Send(string text) => Console.WriteLine($"push: {text}");
+}
+
+public class Notification
+{
+    private readonly IChannel _channel;         // the channel is STORED, not inherited
+    public bool IsUrgent { get; init; }
+
+    public Notification(IChannel channel) => _channel = channel;
+
+    public void Send(string text)
+        => _channel.Send(IsUrgent ? "URGENT! " + text : text);
+}
+
+new Notification(new PushChannel()) { IsUrgent = true }.Send("the server is down");
+// an urgent push — and not a single new class`,
+        deep: `<p><b>Deeper:</b> a class explosion is a sign that features are <i>multiplying</i>
+(channel × urgency × delay = 8 classes, and with a fourth feature already 16). Inheritance can't
+add things up — it gives you one branch. Composition can: every feature becomes a separate part, and
+they combine freely. That's where "prefer composition over inheritance" comes from — it's not about
+beauty, it's about arithmetic.</p>`,
+        links: [
+          { label: "Refactoring Guru — Replace Inheritance with Delegation", url: "https://refactoring.guru/ru/replace-inheritance-with-delegation" },
+          { label: "MS Learn — Inheritance vs composition", url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop" }
+        ],
+        task: {
+          q: "The Driver class stores a Car in a field set in the constructor and only drives that one. What should be changed?",
+          options: [
+            "Nothing, this is correct",
+            "Make Driver inherit from Car",
+            "Pass the Car as a parameter of Drive(Car car) — association is enough for a driver, they don't need to own the car",
+            "Make the field public"
+          ],
+          answer: 2,
+          explain: "Ownership is unnecessary here: the driver simply uses the car. A method parameter gives freedom — you can get into any car, and swapping one in for a test is easy."
+        }
+      },
+      {
+        id: "oop-16",
+        title: "Extension methods",
+        subtitle: "Adding a method to someone else's class",
+        theory: `
+<p>You want a <code>ToSlug()</code> method on <code>string</code> that turns "Hello World" into
+"hello-world". But <code>string</code> was written at Microsoft, you can't get inside it, and
+inheriting from it is forbidden.</p>
+<p>An <b>extension method</b> solves this: you write the method <i>outside</i>, and call it as if it
+had always been part of the class. The rules are simple and there are only four:</p>
+<ol>
+<li>the class must be <code>static</code>;</li>
+<li>the method must be <code>static</code>;</li>
+<li>the first parameter is marked with the word <code>this</code> — that's the type you're
+extending;</li>
+<li><code>this</code> is only allowed on the first parameter.</li>
+</ol>
+<p>There's no magic here: the compiler simply rewrites <code>text.ToSlug()</code> into
+<code>StringExtensions.ToSlug(text)</code>. It's <i>syntactic sugar</i> — a nicer way of writing the
+very same call.</p>
+<p>This is exactly what all of LINQ is built on: <code>Where</code>, <code>Select</code>,
+<code>OrderBy</code> are ordinary extension methods for <code>IEnumerable&lt;T&gt;</code>.</p>`,
+        code: `public static class StringExtensions      // 1) the class is static
+{
+    // 2) the method is static   3) the first parameter has this
+    public static string ToSlug(this string text)
+        => text.Trim().ToLower().Replace(" ", "-");
+
+    public static bool IsBlank(this string? text)
+        => string.IsNullOrWhiteSpace(text);
+}
+
+// It would look like this:
+var a = StringExtensions.ToSlug("Hello World");
+
+// Or like this — as if string always had the method:
+var b = "Hello World".ToSlug();      // hello-world
+
+if ("   ".IsBlank()) Console.WriteLine("blank string");
+
+// LINQ is exactly the same thing, extension methods for IEnumerable<T>
+var evens = new[] { 1, 2, 3, 4 }.Where(x => x % 2 == 0);`,
+        deep: `<p><b>Deeper:</b> extensions have a price. They <b>can't see private members</b> — from
+outside the class only the public stuff is available, so this isn't really OOP. They're easy to
+"hide": the method lives in someone else's file and is hard to spot by eye (the <code>using</code>
+of the right namespace saves you — without it the method simply doesn't appear). And a nice detail:
+an extension can happily be called on <code>null</code>, since it's just a static method — that's
+what checks like <code>IsBlank()</code> are built on.</p>`,
+        links: [
+          { label: "MS Learn — Extension methods", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "MS Learn — LINQ", url: "https://learn.microsoft.com/en-us/dotnet/csharp/linq/" }
+        ],
+        task: {
+          kind: "write",
+          q: "Write an extension method <code>Shout()</code> for <code>string</code> that returns the string in upper case. A single signature line with a body is enough.",
+          placeholder: "public static string Shout(...)",
+          must: ["staticstringshout(thisstring"],
+          solution: `public static class StringExtensions
+{
+    public static string Shout(this string text) => text.ToUpper() + "!";
+}
+
+// using it:
+"hello".Shout();   // HELLO!`,
+          explain: "A static class, a static method, and this on the first parameter — three required conditions. After that the compiler turns text.Shout() into a call to StringExtensions.Shout(text)."
+        }
+      },
+      {
+        id: "oop-17",
+        title: "Extensions vs ordinary methods",
+        subtitle: "Who wins, and what a fluent API is",
+        theory: `
+<p>An important rule that trips up even experienced people: <b>a real class method always beats an
+extension method</b>.</p>
+<p>The logic is this: the compiler first looks for the method <i>inside</i> the type. If it finds
+one, that's it — it doesn't even look at extensions. <code>virtual</code>, <code>override</code>, a
+method hidden with <code>new</code> — they all win. An extension is only considered <b>if there is
+no suitable method in the class at all</b>.</p>
+<p>So the conclusion: you can't "replace" the behaviour of someone else's class with an extension.
+It only fills in what's missing.</p>
+<p>Extensions are also loved for <b>fluent APIs</b> — chains of calls. The trick is simple: if a
+method returns the object itself (<code>return this</code>, or the changed object), you can write
+the next call right after it. It reads almost like a sentence — which is exactly why LINQ feels so
+pleasant.</p>`,
+        code: `public class A
+{
+    public void Print() => Console.WriteLine("class A's method");
+}
+
+public static class Ext
+{
+    public static void Print(this A a) => Console.WriteLine("extension method");
+}
+
+new A().Print();          // "class A's method" — the extension always loses
+
+
+// ---------- fluent API: every method returns the object ----------
+public class QueryBuilder
+{
+    private readonly List<string> _parts = new();
+
+    public QueryBuilder From(string table)  { _parts.Add($"FROM {table}");  return this; }
+    public QueryBuilder Where(string cond)  { _parts.Add($"WHERE {cond}");  return this; }
+    public QueryBuilder OrderBy(string col) { _parts.Add($"ORDER BY {col}"); return this; }
+
+    public override string ToString() => string.Join(" ", _parts);
+}
+
+var sql = new QueryBuilder()
+    .From("Users")
+    .Where("Age > 18")
+    .OrderBy("Name")
+    .ToString();          // FROM Users WHERE Age > 18 ORDER BY Name`,
+        deep: `<p><b>Deeper:</b> this rule has an unpleasant consequence for library authors. If you
+shipped an extension called <code>Print()</code> and later a real <code>Print()</code> appears in the
+class itself, your users' code will silently start calling a different method. Not a compile error,
+just a quiet change of behaviour. That's why extensions get more specific names and live in a
+separate namespace you opt into deliberately.</p>`,
+        links: [
+          { label: "MS Learn — Extension methods (binding rules)", url: "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods" },
+          { label: "Martin Fowler — Fluent Interface", url: "https://martinfowler.com/bliki/FluentInterface.html" }
+        ],
+        task: {
+          q: "Class A has a <code>Print()</code> method, and an extension <code>Print()</code> for A has also been written. What gets called by <code>new A().Print()</code>?",
+          options: [
+            "The extension method — it was declared later",
+            "Class A's method — extensions are only considered when there is no suitable method in the class",
+            "Both, one after the other",
+            "A compile error: ambiguous call"
+          ],
+          answer: 1,
+          explain: "The compiler looks for the method in the type first. If it finds one, it doesn't even consider extensions. You cannot replace a class's behaviour with an extension."
+        }
+      }
+    ]
+  },
   {
     id: "generics",
     name: "Generics",
@@ -3032,6 +4152,7 @@ in their warm-up phase.</p>`,
 
 // Same world order as the Russian data file.
 const WORLD_ORDER = [
+  "oop",
   "dsa",
   "enumerables",
   "delegates",
