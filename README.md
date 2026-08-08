@@ -22,6 +22,10 @@
 - **FileStream I/O** — потоки, чтение/запись, `using`/`Dispose`, async
 - **Делегаты и события** — делегаты, `Func`/`Action`, лямбды, мультикаст, `event`, паттерн **EventBus**
 - **Design Patterns** — все 13 паттернов из лекции (Creational / Structural / Behavioral)
+- **Сборка мусора (GC)** — достижимость и корни, сегменты и поколения, layout объекта и
+  bump-аллокация, бюджеты и safe points, mark/plan/compact/sweep, фрагментация, card table
+  и write barrier, LOH/POH/FOH, финализация против `Dispose`, Workstation/Server/Background GC
+  и диагностика *(пока только RU)*
 
 ## Файлы
 - `index.html` — точка входа
